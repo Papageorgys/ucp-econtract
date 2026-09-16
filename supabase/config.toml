@@ -1,0 +1,10 @@
+[functions.app]
+verify_jwt = false
+[functions.applications]
+verify_jwt = false
+[functions.extract]
+verify_jwt = false
+[functions.otp]
+verify_jwt = false
+[functions.review]
+verify_jwt = false

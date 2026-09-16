@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>e-Contract</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap">
+<style>:root{
+  --bg:#F4F6F9; --card:#FFFFFF; --ink:#151B26; --ink-2:#4E5968; --ink-3:#8792A2;
+  --line:#D9DFE7; --line-2:#EBEFF4; --focus:#2563EB;
+  --brand:#0B3D91; --brand-2:#1450C4; --brand-soft:#E8EFFB; --brand-ink:#0B3D91;
+  --ok:#0F7A3D; --ok-soft:#E4F4EA; --warn:#8A5A00; --warn-soft:#FFF4DB; --err:#B3261E; --err-soft:#FCE9E7;
+  --r:12px; --r-lg:16px; --sans:'Manrope',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --sh:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.08);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0F1520;--card:#18202C;--ink:#EDF1F6;--ink-2:#B4BDC9;--ink-3:#7B8595;--line:#2A3441;--line-2:#222B37;--focus:#7FA7F2;--brand:#7FA7F2;--brand-2:#5C8EEB;--brand-soft:#1B2A45;--brand-ink:#B8CEF8;--ok:#5FC482;--ok-soft:#14301F;--warn:#E5B54A;--warn-soft:#3A2D10;--err:#F0928A;--err-soft:#3C1A17;--sh:none}}
+:root[data-theme="dark"]{--bg:#0F1520;--card:#18202C;--ink:#EDF1F6;--ink-2:#B4BDC9;--ink-3:#7B8595;--line:#2A3441;--line-2:#222B37;--focus:#7FA7F2;--brand:#7FA7F2;--brand-2:#5C8EEB;--brand-soft:#1B2A45;--brand-ink:#B8CEF8;--ok:#5FC482;--ok-soft:#14301F;--warn:#E5B54A;--warn-soft:#3A2D10;--err:#F0928A;--err-soft:#3C1A17;--sh:none}
+*{box-sizing:border-box} html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit;color:inherit} h1,h2,h3{margin:0;line-height:1.2;font-weight:700} p{margin:0}
+.muted{color:var(--ink-2)} .faint{color:var(--ink-3)} .small{font-size:14px} .center{text-align:center} .err-text{color:var(--err)}
+.mono{font-family:ui-monospace,Menlo,monospace;font-size:12px}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px;border-radius:6px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
+.sr{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+
+/* top bar */
+.top{background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
+.top .in{max-width:1180px;margin:0 auto;padding:10px 20px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;min-height:56px}
+.brand{font-weight:800;font-size:17px;color:var(--brand-ink);display:flex;align-items:center;gap:8px;letter-spacing:-.01em}
+.brand i{display:inline-block;width:22px;height:22px;border-radius:6px;background:var(--brand);position:relative}
+.brand i::after{content:"";position:absolute;left:9px;top:5px;width:4px;height:12px;background:#fff;border-radius:2px;transform:skewX(-14deg)}
+.top .sp{flex:1}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden;background:var(--card)}
+.seg button{background:transparent;border:0;padding:6px 12px;font-size:13px;cursor:pointer;color:var(--ink-2);min-height:32px}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--card)}
+
+/* layout */
+.cwrap{max-width:640px;margin:0 auto;padding-bottom:120px}
+.cmain{padding:8px 20px 24px}
+.h1{font-size:26px;letter-spacing:-.015em;margin:14px 0 6px} .h2{font-size:17px;margin-bottom:10px}
+.lead{color:var(--ink-2);margin-bottom:20px;max-width:58ch}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);padding:20px;margin-bottom:14px;box-shadow:var(--sh)}
+.card.list{padding:8px 20px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:12px}
+.center-stack{display:grid;gap:12px;justify-items:stretch;text-align:center}
+.or{display:flex;align-items:center;gap:12px;color:var(--ink-3);font-size:13px} .or::before,.or::after{content:"";flex:1;height:1px;background:var(--line)}
+
+/* stepper */
+.stepper{padding:14px 20px 0}
+.stepper ol{list-style:none;margin:0;padding:0;display:flex;gap:0;counter-reset:s}
+.stepper li{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;position:relative;font-size:12px;color:var(--ink-3);text-align:center}
+.stepper li::before{content:"";position:absolute;top:13px;left:50%;width:100%;height:2px;background:var(--line);z-index:0}
+.stepper li:last-child::before{display:none}
+.stepper .dot{width:26px;height:26px;border-radius:50%;background:var(--card);border:2px solid var(--line);display:grid;place-items:center;font-size:12px;font-weight:700;position:relative;z-index:1}
+.stepper li.done .dot{background:var(--ok);border-color:var(--ok);color:#fff} .stepper li.done::before{background:var(--ok)}
+.stepper li.cur .dot{border-color:var(--brand-2);color:var(--brand-ink);box-shadow:0 0 0 4px var(--brand-soft)} .stepper li.cur{color:var(--ink);font-weight:600}
+.stepper .lbl{max-width:80px;line-height:1.2}
+.stepof{font-size:13px;color:var(--ink-2);margin:10px 0 0}
+@media (max-width:480px){.stepper .lbl{display:none} .stepper li.cur .lbl{display:block;position:absolute;top:32px;white-space:nowrap} .stepper ol{padding-bottom:18px}}
+
+/* fields */
+.field{display:grid;gap:6px;margin:0 0 18px}
+.field label{font-weight:600;font-size:15px} .field .opt{font-weight:400;color:var(--ink-3);font-size:13px}
+.field .why{font-size:13.5px;color:var(--ink-2)}
+.field .inwrap{position:relative}
+.field input,.field select,.field textarea{border:1.5px solid var(--line);border-radius:10px;padding:13px 14px;background:var(--card);width:100%;font-size:16px;min-height:48px;transition:border-color .12s,box-shadow .12s}
+.field input:focus{border-color:var(--brand-2);outline:none;box-shadow:0 0 0 3px var(--brand-soft)}
+.field input:disabled{background:var(--line-2);color:var(--ink-2);border-style:dashed}
+.field .hint{font-size:13px;color:var(--ink-3)} .field .err{font-size:13.5px;color:var(--err);font-weight:600;display:flex;gap:6px}
+.field .err::before{content:"!";display:inline-grid;place-items:center;width:16px;height:16px;border-radius:50%;background:var(--err);color:#fff;font-size:11px;flex:none;margin-top:3px}
+.field.has-err input{border-color:var(--err);box-shadow:0 0 0 3px var(--err-soft)}
+.field .ok-mark{position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--ok);font-weight:800;opacity:0;transition:opacity .15s}
+.field.has-ok .ok-mark{opacity:1} .field.has-ok input{border-color:var(--ok)}
+
+/* choices */
+.choices{display:grid;gap:10px;grid-template-columns:repeat(var(--cols,1),1fr)}
+.choice{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;border:1.5px solid var(--line);border-radius:12px;padding:14px 16px;cursor:pointer;background:var(--card);min-height:56px;transition:border-color .12s,background .12s}
+.choice:hover{border-color:var(--brand-2)} .choice.sel{border-color:var(--brand-2);background:var(--brand-soft)} .choice.dis{opacity:.5;cursor:not-allowed}
+.choice input{position:absolute;opacity:0;width:1px;height:1px}
+.choice .ci{width:20px;height:20px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center} .choice.sel .ci{border-color:var(--brand-2)} .choice.sel .ci::after{content:"";width:10px;height:10px;border-radius:50%;background:var(--brand-2)}
+.choice:has(input:focus-visible){outline:3px solid var(--focus);outline-offset:2px}
+.choice .ct b{display:block} .choice .ct span{font-size:14px;color:var(--ink-2)} .choice .cr{text-align:right;display:grid;justify-items:end} .choice .cr b{font-size:18px;color:var(--brand-ink)}
+.choices .err,.consents .err,.card .err#docs-err{font-size:13.5px;color:var(--err);font-weight:600;grid-column:1/-1;margin:0}
+
+/* journey cards */
+.jgrid{display:grid;gap:12px}
+.jcard{text-align:left;background:var(--card);border:1.5px solid var(--line);border-radius:var(--r-lg);padding:18px 20px;cursor:pointer;display:grid;grid-template-columns:44px 1fr;grid-template-rows:auto auto;column-gap:14px;align-items:center;box-shadow:var(--sh);transition:border-color .12s,transform .08s}
+.jcard:hover{border-color:var(--brand-2)} .jcard:active{transform:scale(.995)}
+.jcard .ic{grid-row:1/3;width:44px;height:44px;border-radius:12px;background:var(--brand-soft);display:grid;place-items:center;color:var(--brand);font-size:20px}
+.jcard b{font-size:17px} .jcard span:last-child{color:var(--ink-2);font-size:14px}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1.5px solid transparent;border-radius:12px;padding:12px 18px;font-weight:600;cursor:pointer;min-height:48px;font-size:16px;transition:background .12s,border-color .12s,transform .06s;position:relative}
+.btn:active{transform:translateY(1px)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff} .btn.primary:hover{background:var(--brand-2);border-color:var(--brand-2)}
+.btn.secondary{background:var(--card);border-color:var(--brand);color:var(--brand-ink)} .btn.secondary:hover{background:var(--brand-soft)}
+.btn.link{background:transparent;color:var(--ink-2);padding:8px 8px;min-height:40px;font-weight:500} .btn.link:hover{color:var(--ink);text-decoration:underline}
+.btn.big{width:100%} .btn.sm{min-height:38px;padding:8px 14px;font-size:14px;border-radius:9px}
+.btn.ok{background:var(--ok);border-color:var(--ok);color:#fff} .btn.danger{background:var(--card);border-color:var(--err);color:var(--err)}
+.btn .gov{width:22px;height:22px;border-radius:5px;background:#fff;color:var(--brand);font-size:11px;font-weight:800;display:grid;place-items:center}
+.btn .spin{display:none;width:16px;height:16px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:sp .7s linear infinite}
+body.busy .btn.primary .spin{display:inline-block} body.busy .btn.primary{pointer-events:none;opacity:.85}
+.btn.busy{opacity:.6;pointer-events:none}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+/* sticky CTA */
+.cta{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);z-index:4;padding:12px 20px calc(12px + env(safe-area-inset-bottom))}
+.cta .ctain{max-width:640px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;gap:12px}
+.cta .btn.primary{min-width:180px}
+@media (max-width:480px){.cta .btn.primary{flex:1}}
+
+/* alerts, tags, pills */
+.alert{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;border-radius:12px;margin:8px 0 12px;font-size:15px;border:1px solid transparent}
+.alert .ai{width:10px;height:10px;border-radius:50%;flex:none;margin-top:7px}
+.alert.ok{background:var(--ok-soft)} .alert.ok .ai{background:var(--ok)} .alert.warn{background:var(--warn-soft)} .alert.warn .ai{background:var(--warn)} .alert.err{background:var(--err-soft)} .alert.err .ai{background:var(--err)}
+.tag{display:inline-block;font-size:12.5px;font-weight:700;padding:3px 9px;border-radius:999px;background:var(--brand-soft);color:var(--brand-ink);margin-bottom:8px} .tag.ok{background:var(--ok-soft);color:var(--ok)}
+.pill{font-size:12.5px;font-weight:600;padding:3px 9px;border-radius:999px;white-space:nowrap}
+.pill.pending{background:var(--warn-soft);color:var(--warn)} .pill.approved{background:var(--ok-soft);color:var(--ok)} .pill.rejected{background:var(--err-soft);color:var(--err)} .pill.none{background:var(--line-2);color:var(--ink-2)}
+.line{display:flex;justify-content:space-between;gap:12px;padding:12px 0;border-top:1px solid var(--line-2)} .line:first-of-type{border-top:0} .line .desc{display:block;font-size:14px;color:var(--ink-2)} .line .price{color:var(--brand-ink)}
+.offer .row{margin-top:14px} .offer .row .btn{flex:1}
+
+/* documents */
+.docrow{display:grid;grid-template-columns:44px 1fr auto;gap:14px;align-items:center;padding:14px 0;border-top:1px solid var(--line-2)} .docrow:first-child{border-top:0}
+.docrow .th{width:44px;height:44px;border-radius:10px;background:var(--line-2);display:grid;place-items:center;font-size:20px}
+.docrow .dt b{display:block} .docrow .desc{display:block;font-size:13.5px;color:var(--ink-2)} .docrow .da{display:grid;gap:6px;justify-items:end}
+.docrow.rejected .th{background:var(--err-soft)} .docrow.approved .th{background:var(--ok-soft)}
+@media (max-width:480px){.docrow{grid-template-columns:44px 1fr} .docrow .da{grid-column:2;justify-items:start;grid-auto-flow:column;align-items:center}}
+
+/* consents, otp, kv, details */
+.consents{display:grid;gap:14px} .check{display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:start;font-size:15px;cursor:pointer;min-height:24px}
+.check input{width:22px;height:22px;margin:1px 0 0;accent-color:var(--brand-2)}
+.otp{display:flex;gap:8px;justify-content:center;margin:12px 0}
+.otp input{width:46px;height:56px;text-align:center;font-size:24px;font-weight:700;border:1.5px solid var(--line);border-radius:10px;background:var(--card)}
+.otp input:focus{border-color:var(--brand-2);outline:none;box-shadow:0 0 0 3px var(--brand-soft)}
+#otp-err{font-size:13.5px;color:var(--err);font-weight:600;text-align:center;margin:0 0 8px}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:8px 16px;margin:0 0 6px;font-size:15px} .kv dt{color:var(--ink-2)} .kv dd{margin:0;font-weight:600}
+.kv input{border:0;background:transparent;font-weight:700;width:100%;text-align:right}
+details{border-top:1px solid var(--line-2);padding:12px 0} details summary{cursor:pointer;font-weight:600;list-style:none;display:flex;justify-content:space-between;align-items:center;min-height:32px}
+details summary::after{content:"+";color:var(--ink-3);font-size:20px} details[open] summary::after{content:"–"} details .body{padding-top:8px;font-size:14.5px;color:var(--ink-2)}
+
+/* hero / done */
+.hero{background:var(--brand);color:#fff;border-radius:var(--r-lg);padding:26px 22px;margin:14px 0} .hero h1{color:#fff;font-size:24px} .hero p{color:rgba(255,255,255,.85);margin-top:6px}
+.ref{font-size:14px;color:var(--ink-2);margin-bottom:14px}
+.steps{list-style:none;margin:0;padding:0;display:grid;gap:14px} .steps li{display:grid;grid-template-columns:28px 1fr;gap:12px;align-items:start}
+.steps li i{width:28px;height:28px;border-radius:50%;background:var(--brand-soft);color:var(--brand-ink);display:grid;place-items:center;font-style:normal;font-weight:700;font-size:13px}
+.steps li b{display:block} .steps li span{color:var(--ink-2);font-size:14.5px}
+
+/* skeleton, toast, live, sheet, lightbox, demo */
+.sk{height:16px;border-radius:6px;background:linear-gradient(90deg,var(--line-2),var(--line),var(--line-2));background-size:200% 100%;animation:sh 1.2s infinite;margin:10px 0} .sk:first-child{width:60%} @keyframes sh{to{background-position:-200% 0}}
+.toast{position:fixed;left:50%;bottom:96px;transform:translate(-50%,20px);background:var(--ink);color:var(--card);padding:10px 16px;border-radius:10px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:9;max-width:90vw}
+.toast.show{opacity:1;transform:translate(-50%,0)} .toast.err{background:var(--err);color:#fff}
+.sheet-bg{position:fixed;inset:0;background:rgba(10,15,25,.55);display:none;align-items:flex-end;justify-content:center;z-index:20} .sheet-bg.open{display:flex}
+.sheet{background:var(--card);border-radius:20px 20px 0 0;width:100%;max-width:640px;padding:22px 20px 30px} .sheet h2{margin-bottom:6px} .sheet .kv{margin:14px 0}
+.lightbox{position:fixed;inset:0;background:rgba(10,15,25,.85);display:none;place-items:center;z-index:30;padding:20px;cursor:zoom-out} .lightbox.open{display:grid} .lightbox img{max-width:100%;max-height:100%;border-radius:8px}
+.demo{padding:8px 20px 30px;font-size:12.5px;color:var(--ink-3)} .demo .ctl{display:none;margin-top:8px;gap:8px;flex-wrap:wrap} .demo.on .ctl{display:flex}
+.demo .ctl button{border:1px solid var(--line);border-radius:6px;padding:4px 8px;background:transparent;color:var(--ink-2);cursor:pointer;font-size:12.5px}
+
+/* agent console */
+.awrap{max-width:1180px;margin:0 auto;padding:18px 20px 40px;display:grid;grid-template-columns:320px minmax(0,1fr);gap:16px}
+@media (max-width:900px){.awrap{grid-template-columns:1fr}}
+.queue{background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;align-self:start}
+.queue h2{padding:14px 16px;border-bottom:1px solid var(--line);font-size:15px;display:flex;justify-content:space-between}
+.queue .q{list-style:none;margin:0;padding:0} .queue .q li{padding:12px 16px;border-bottom:1px solid var(--line-2);cursor:pointer;display:grid;gap:3px}
+.queue .q li:hover{background:var(--line-2)} .queue .q li.sel{background:var(--brand-soft)} .queue .q li b{font-size:14.5px} .queue .q li .m{font-size:12.5px;color:var(--ink-2);display:flex;justify-content:space-between;gap:8px}
+.queue .empty{padding:20px 16px;color:var(--ink-3);font-size:14px}
+.rec{display:grid;gap:14px}
+.rhead{background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);padding:18px 20px;display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap} .rhead h1{font-size:20px} .rhead .sub{color:var(--ink-2);font-size:14px;margin-top:2px} .rhead .sp{flex:1}
+.kvgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px 20px;font-size:14px} .kvgrid div span{display:block;color:var(--ink-3);font-size:12.5px} .kvgrid div b{font-weight:600}
+.dgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.dcard{background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;display:flex;flex-direction:column} .dcard.approved{border-color:var(--ok)} .dcard.rejected{border-color:var(--err)}
+.dcard .prev{height:190px;background:var(--line-2);display:grid;place-items:center;color:var(--ink-3);cursor:zoom-in} .dcard .prev img{width:100%;height:100%;object-fit:cover} .dcard .prev .none{font-size:14px;text-align:center;padding:20px}
+.dcard .body{padding:14px 16px;display:grid;gap:10px} .dcard .body h3{display:flex;justify-content:space-between;gap:10px;align-items:center;font-size:15px}
+.ext{width:100%;border-collapse:collapse;font-size:13.5px} .ext td{padding:5px 0;border-top:1px solid var(--line-2);vertical-align:top} .ext tr:first-child td{border-top:0} .ext td:first-child{color:var(--ink-2);width:44%}
+.chk{list-style:none;margin:0;padding:0;font-size:13.5px;display:grid;gap:5px} .chk li{display:grid;grid-template-columns:18px 1fr;gap:8px;align-items:start}
+.chk li i{font-style:normal;width:18px;height:18px;border-radius:50%;display:grid;place-items:center;font-size:11px;font-weight:700;color:#fff} .chk li.ok i{background:var(--ok)} .chk li.bad i{background:var(--err)} .chk li.warn i{background:var(--warn)} .chk li.bad{color:var(--err)}
+.conf{height:5px;border-radius:999px;background:var(--line);overflow:hidden} .conf i{display:block;height:100%;background:var(--brand-2)}
+.dact{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
+.rej{display:grid;gap:8px;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--bg)} .rej select,.rej textarea{border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--card);width:100%;font-size:14px}
+.log{list-style:none;margin:0;padding:0;font-size:13.5px} .log li{display:grid;grid-template-columns:72px 1fr;gap:12px;padding:7px 0;border-top:1px solid var(--line-2)} .log li:first-child{border-top:0} .log li span{color:var(--ink-3);font-variant-numeric:tabular-nums}
+.decision{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.field.tok input{max-width:420px}
+</style>
+</head>
+<body>
+<a class="sr" href="#main">Skip to content</a>
+<div class="top"><div class="in">
+  <div class="brand" id="brandName"><i></i></div>
+  <div class="seg" id="role" role="group" aria-label="Role"><button data-r="customer" aria-pressed="true">Πελάτης</button><button data-r="agent" aria-pressed="false">Agent</button></div>
+  <div class="sp"></div>
+  <div class="seg" id="langSeg" role="group" aria-label="Language"><button data-l="el" aria-pressed="true">ΕΛ</button><button data-l="en" aria-pressed="false">EN</button></div>
+  <button class="btn link sm" id="exit"></button>
+</div></div>
+<div id="app"></div>
+<div id="live" class="sr" aria-live="polite" aria-atomic="true"></div>
+<div id="toast" class="toast" role="status"></div>
+<div class="sheet-bg" id="sheetBg"><div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-h"></div></div>
+<div class="lightbox" id="lightbox"><img alt=""></div>
+<input type="file" id="filePick" accept="image/jpeg,image/png,image/webp,application/pdf" hidden>
+<script>
+/*BRAND*/
+const B=window.BRAND||{name:"Utility",supplier:"The Supplier",support:"",eid:"e-ID Wallet",grid:"the grid operator",taxIdLabel:"Tax ID",locale:"el"};
+const T = {
+  el:{
+    exit:"Έξοδος", newApp:"Νέα αίτηση", stepOf:(a,b)=>`Βήμα ${a} από ${b}`,
+    steps:{ offers_1:"Προσφορές", offers_2:"Προσφορές", offers_3:"Προσφορές", identity:"Ταυτοποίηση", eligibility:"Έλεγχος", product:"Πρόγραμμα", customer:"Στοιχεία", documents:"Έγγραφα", payment:"Πληρωμή", contract:"Υπογραφή" },
+    start_h:"Τι θέλετε να ξεκινήσετε;", start_p:`Η διαδικασία ολοκληρώνεται ηλεκτρονικά σε λίγα λεπτά. Θα χρειαστείτε το ${B.eid} και το κινητό σας.`,
+    j_electricity:"Ρεύμα", j_el_d:"Νέα σύμβαση ηλεκτρικής ενέργειας", j_fiber:"Fiber", j_fb_d:"Νέα σύνδεση οπτικής ίνας", j_bundle:"Ρεύμα + Fiber", j_bn_d:"Και τα δύο μαζί, με έκπτωση πακέτου",
+    id_h:"Επιβεβαιώστε ποιος υπογράφει", id_p:`Θα ανακτήσουμε το όνομα και τον ΑΦΜ σας από το ${B.eid} μία φορά, με τη δική σας έγκριση.`,
+    id_btn:`Συνέχεια με ${B.eid}`, id_ok:"Ταυτοποιηθήκατε", id_fail:`Το ${B.eid} δεν επέστρεψε στοιχεία. Δοκιμάστε ξανά${B.support?" ή καλέστε το "+B.support:""}.`, id_retry:"Δοκιμή ξανά", demo_up:"Δείγματα εγγράφων", demo_up_mis:"Δείγματα με ασυμφωνία", confirm_new:"Να ξεκινήσετε νέα αίτηση; Η τρέχουσα θα μείνει ημιτελής.", v_optional:"προαιρετικό", v_digit:"ψηφίο", afm_hint:"9 ψηφία, χωρίς κενά.", phone_why_id:"Στέλνουμε κωδικό για να επιβεβαιώσουμε ότι το κινητό είναι δικό σας.", phone_why_sig:"Εδώ θα σταλεί ο κωδικός υπογραφής της σύμβασης.", phone_why_locked:"Επιβεβαιωμένο στην ταυτοποίηση· δεν αλλάζει εδώ.", otp_log:"χωρίς πάροχο SMS: ο κωδικός γράφεται στο log της υπηρεσίας", simulated:"προσομοίωση", ad_opt_h:"Αν τη δώσετε, ελέγχουμε αν υπάρχει οπτική ίνα και σας ενημερώνουμε.", d_ID_h:"Φωτογραφία και των δύο όψεων ή σελίδα διαβατηρίου.", d_SUPPLY_h:"Έως 3 μηνών, με ορατό τον αριθμό παροχής.", d_OWNERSHIP_h:"Μισθωτήριο (ΑΑΔΕ) ή συμβόλαιο.", do_uploaded:"Το έγγραφο ανέβηκε και ελέγχεται.", of_added:"Προστέθηκε.", of_declined:"Εντάξει, χωρίς αλλαγή.", progress:"Πρόοδος", e_fix:"Διορθώστε τα πεδία με σφάλμα.", e_network:"Χωρίς σύνδεση. Δοκιμάστε ξανά.", e_session:"Η συνεδρία έληξε. Ξεκινήστε ξανά.", e_consents:"Επιλέξτε τα τέσσερα υποχρεωτικά πεδία.", e_otp_incomplete:"Συμπληρώστε και τα 6 ψηφία.", e_otp_wrong:"Ο κωδικός δεν είναι σωστός.", e_otp_lock:"Τρεις λάθος προσπάθειες — ζητήστε νέο κωδικό.", e_otp_expired:"Ο κωδικός έληξε — ζητήστε νέο.", e_file_large:"Το αρχείο ξεπερνά τα 8 MB.", e_name_required:"Γράψτε το ονοματεπώνυμό σας.", e_afm_format:"Ο ΑΦΜ έχει 9 ψηφία.", e_phone_format:"Γράψτε 10ψήφιο κινητό.", e_phone_locked_manual:"Το κινητό επιβεβαιώθηκε στην ταυτοποίηση και δεν αλλάζει.", e_email_format:"Γράψτε έγκυρο email, π.χ. onoma@example.gr.", e_supply_point_format:"Ο αριθμός παροχής έχει 9–14 ψηφία.", e_supply_point_pending_switch:"Υπάρχει ήδη εκκρεμής αλλαγή προμηθευτή σε αυτή την παροχή. Θα επικοινωνήσουμε μαζί σας.", e_address_required:"Γράψτε οδό, αριθμό και ΤΚ.", e_no_coverage:"Δεν υπάρχει κάλυψη οπτικής ίνας εδώ ακόμη.", e_sku_required:"Επιλέξτε πρόγραμμα.", e_sku_unknown:"Το πρόγραμμα δεν είναι διαθέσιμο.", e_assurance_too_low:"Αυτό το πρόγραμμα απαιτεί ταυτοποίηση μέσω e-ID.", e_payment_required:"Επιλέξτε τρόπο πληρωμής.", e_payment_mandate_required:"Για Fiber απαιτείται πάγια εντολή ή κάρτα.", e_docs_missing:"Ανεβάστε όλα τα έγγραφα για να συνεχίσετε.", e_offer_unavailable:"Η προσφορά δεν είναι πλέον διαθέσιμη.", e_identity_first:"Ολοκληρώστε πρώτα την ταυτοποίηση.", e_required_consents_missing:"Επιλέξτε τα υποχρεωτικά πεδία.",  of_h1:"Υπάρχει και οπτική ίνα", of_h2:"Πριν συνεχίσετε", of_h3:"Θέλετε κάτι ακόμη;", of_p:"Προαιρετικό. Μπορείτε να προχωρήσετε χωρίς αλλαγές.", of_add:"Προσθήκη", of_swap:"Αναβάθμιση", of_no:"Όχι, ευχαριστώ", of_skip:"Συνέχεια χωρίς αλλαγές", of_kind_upsell:"Αναβάθμιση", of_kind_cross_sell:"Πακέτο", of_kind_addon:"Πρόσθετο", of_child:"Νέα σύμβαση για το πρόσθετο — τα στοιχεία σας μεταφέρθηκαν.", ad_opt:"Προαιρετικά: διεύθυνση για έλεγχο οπτικής ίνας", id_or:"ή", id_manual:`Χωρίς ${B.eid}: με στοιχεία και ταυτότητα`, id_m_h:"Τα στοιχεία σας", id_m_p:"Θα επιβεβαιώσουμε το κινητό σας τώρα και την ταυτότητά σας από το έγγραφο που θα ανεβάσετε. Ο έλεγχος από εκπρόσωπο είναι υποχρεωτικός.", id_m_send:"Αποστολή κωδικού", id_m_verify:"Επιβεβαίωση", id_m_ok:"Το κινητό επιβεβαιώθηκε. Απαιτείται ταυτότητα στα έγγραφα.", id_m_back:`Χρήση ${B.eid} αντί αυτού`, asr_sub:`Υψηλή διασφάλιση (${B.eid})`, asr_low:"Χαμηλή διασφάλιση (κινητό + ταυτότητα)",
+    sheet_h:`Έγκριση από το ${B.eid}`, sheet_p:`Ο πάροχος ${B.name} ζητά πρόσβαση στα παρακάτω στοιχεία:`, sheet_name:"Ονοματεπώνυμο", sheet_afm:"ΑΦΜ", sheet_id:"Αρ. ταυτότητας", sheet_ok:"Εγκρίνω", sheet_no:"Άρνηση",
+    el_h:"Ας ελέγξουμε τι μπορούμε να σας παρέχουμε", el_p:"Ο έλεγχος γίνεται πριν δείτε προγράμματα.",
+    sp_l:"Αριθμός Παροχής", sp_h:"Θα τον βρείτε σε οποιονδήποτε λογαριασμό ρεύματος του ακινήτου.", sp_btn:"Έλεγχος παροχής", sp_ok:"Η παροχή είναι διαθέσιμη για νέα σύμβαση.", sp_bad:"Υπάρχει ήδη εκκρεμής αλλαγή προμηθευτή. Θα επικοινωνήσουμε μαζί σας.",
+    ad_l:"Διεύθυνση εγκατάστασης", ad_h:"Οδός, αριθμός, ΤΚ.", ad_btn:"Έλεγχος κάλυψης", ad_ok:"Υπάρχει κάλυψη οπτικής ίνας έως 1 Gbps.", ad_bad:"Δεν υπάρχει κάλυψη οπτικής ίνας στη διεύθυνση αυτή ακόμη.",
+    bn_partial:"Το Fiber δεν είναι διαθέσιμο εδώ. Μπορείτε να συνεχίσετε μόνο με ρεύμα, χωρίς έκπτωση πακέτου.", bn_cont:"Συνέχεια μόνο με ρεύμα",
+    pr_h:"Επιλέξτε πρόγραμμα", pr_p:"Ενδεικτικές τιμές.", pr_bn_h:"Το πακέτο σας", pr_bn_tag:"Έκπτωση πακέτου", pr_bn_p:"Δύο ξεχωριστές συμβάσεις, μία υπογραφή.",
+    per_kwh:"€/kWh", per_mo:"€/μήνα", fixed:"Σταθερή τιμή", months:"μήνες", nofix:"Χωρίς δέσμευση",
+    cu_h:"Τα στοιχεία επικοινωνίας σας", cu_p:`Το όνομα και ο ΑΦΜ προέρχονται από το ${B.eid}. Στο κινητό θα λάβετε τον κωδικό υπογραφής.`,
+    name:"Ονοματεπώνυμο", afm:"ΑΦΜ", email:"Email", email_h:"Εδώ θα σταλεί η σύμβαση.", phone:"Κινητό", phone_h:"Για τον κωδικό μίας χρήσης.",
+    do_h:"Ανεβάστε τα έγγραφά σας", do_p:"Φωτογραφία από το κινητό αρκεί. Θα τα ελέγξει εκπρόσωπός μας· μπορείτε να συνεχίσετε στην υπογραφή εν τω μεταξύ.", upload:"Ανέβασμα", reupload:"Νέο ανέβασμα",
+    d_ID:"Ταυτότητα ή διαβατήριο", d_SUPPLY:"Πρόσφατος λογαριασμός ρεύματος", d_OWNERSHIP:"Μισθωτήριο ή τίτλος ιδιοκτησίας",
+    st_pending:"Σε έλεγχο", st_approved:"Εγκρίθηκε", st_rejected:"Απορρίφθηκε", st_none:"Εκκρεμεί",
+    pa_h:"Πώς θα πληρώνετε", pa_p_el:"Κάθε λογαριασμό ξεχωριστά ή με πάγια εντολή.", pa_p_fb:"Για το Fiber απαιτείται πάγια εντολή.",
+    p_inv:"Κάθε λογαριασμό ξεχωριστά", p_inv_d:"Χωρίς εντολή", p_sepa:"Πάγια τραπεζική εντολή", p_sepa_d:"Αυτόματη εξόφληση", p_card:"Κάρτα", p_card_d:"Αυτόματη χρέωση κάρτας",
+    co_h:"Ελέγξτε και υπογράψτε", co_p:"Έχετε 14 ημέρες για να υπαναχωρήσετε, και online.",
+    c_price:"Τιμή", c_dur:"Διάρκεια", c_exit:"Αποχώρηση", c_sign:"Υπογράφει",
+    pre_h:"Πληροφορίες πριν την υπογραφή", pre_1:`Προμηθευτής: ${B.supplier} Η σύμβαση ξεκινά μετά την ενεργοποίηση.`, wd_h:"Δικαίωμα υπαναχώρησης", wd_1:`Υπαναχώρηση εντός 14 ημερών χωρίς αιτιολογία, από το ${B.name} ή με το έντυπο.`, gd_h:"Προσωπικά δεδομένα", gd_1:"Ονοματεπώνυμο και ΑΦΜ διατηρούνται για την εκτέλεση της σύμβασης και τις νόμιμες υποχρεώσεις.",
+    k_pre:"Έλαβα και διάβασα τις πληροφορίες πριν την υπογραφή.", k_terms:"Αποδέχομαι τους όρους της σύμβασης.", k_wd:"Γνωρίζω ότι μπορώ να υπαναχωρήσω εντός 14 ημερών.", k_gdpr:"Διάβασα την ενημέρωση για τα προσωπικά δεδομένα.", k_mkt:"Προαιρετικά: ενημέρωση για προσφορές.",
+    otp_h:"Υπογραφή με κωδικό μίας χρήσης", otp_p:p=>`Θα στείλουμε 6ψήφιο κωδικό στο ${p}.`, otp_send:"Αποστολή κωδικού", otp_sent:p=>`Στείλαμε κωδικό στο ${p}.`, otp_sign:"Υπογραφή", otp_resend:"Νέος κωδικός", otp_bad:"Ο κωδικός δεν είναι σωστός.", otp_lock:"Τρεις λάθος προσπάθειες.", otp_need:"Συμπληρώστε τα τέσσερα υποχρεωτικά πεδία.",
+    ok_h:"Η σύμβαση υπογράφηκε", ok_p:"Σας στείλαμε αντίγραφο στο email σας.", ok_ref:"Αριθμός αίτησης",
+    next_h:"Τι γίνεται τώρα", n_docs:"Έλεγχος εγγράφων", n_docs_d:"Εκπρόσωπός μας ελέγχει τα έγγραφά σας. Αν χρειαστεί κάτι, θα σας ειδοποιήσουμε.", n_docs_rej:"Κάποιο έγγραφο απορρίφθηκε. Ανεβάστε το ξανά.", n_docs_ok:"Όλα τα έγγραφα εγκρίθηκαν.", n_el:"Ενεργοποίηση παροχής", n_el_d:"Ενημερώνουμε τον διαχειριστή δικτύου μετά την έγκριση των εγγράφων.", n_fb:"Ραντεβού εγκατάστασης", n_fb_d:"Θα σας καλέσουμε εντός 3 εργάσιμων.", n_wd:"Υπαναχώρηση έως", n_wd_d:`Από το ${B.name}, χωρίς αιτιολογία.`, n_fix:"Διόρθωση εγγράφων", n_home:`Πίσω στο ${B.name}`,
+    back:"Πίσω", cont:"Συνέχεια", demo:"Ρυθμίσεις πρωτοτύπου", simf:"Αποτυχία ταυτοποίησης", sims:"Εκκρεμής αλλαγή", simc:"Χωρίς κάλυψη", simo:"Λάθος κωδικός", simm:"Ανέβασμα με ασυμφωνία", clear:"Καθαρισμός δεδομένων",
+    /* agent */
+    a_queue:"Αιτήσεις", a_empty:"Καμία αίτηση. Ολοκληρώστε μία ως πελάτης.", a_pick:"Επιλέξτε αίτηση από τη λίστα.", a_docs:"Έγγραφα", a_extract:"Αναγνωρισμένα στοιχεία", a_checks:"Διασταυρώσεις", a_conf:"Βεβαιότητα OCR",
+    a_journey:"Αίτηση", a_plan:"Πρόγραμμα", a_sp:"Αριθμός Παροχής", a_addr:"Διεύθυνση εγκατάστασης", a_kyc:"Ταυτοποίηση", a_kyc_v:`${B.eid}`, a_contact:"Επικοινωνία", a_pay:"Πληρωμή", a_signed:"Υπογραφή", a_status:"Κατάσταση",
+    s_draft:"Σε εξέλιξη", s_review:"Προς έλεγχο", s_signed:"Υπεγράφη · έλεγχος εγγράφων", s_approved:"Εγκρίθηκε", s_returned:"Επιστράφηκε στον πελάτη", s_active:"Προς ενεργοποίηση",
+    a_approve:"Έγκριση", a_reject:"Απόρριψη", a_reject_h:"Λόγος απόρριψης", a_reject_send:"Επιστροφή στον πελάτη", a_cancel:"Άκυρο", a_note:"Σημείωση προς τον πελάτη (προαιρετικά)",
+    r_illegible:"Δυσανάγνωστο", r_wrong_document:"Λάθος τύπος εγγράφου", r_name_mismatch:"Το όνομα δεν ταιριάζει", r_expired:"Ληγμένο ή παλιό", r_other:"Άλλο",
+    a_notup:"Δεν έχει ανέβει ακόμη", a_pdf:"PDF — χωρίς προεπισκόπηση", a_uploaded:"Ανέβηκε", a_log:"Ιστορικό", a_activate:"Προώθηση για ενεργοποίηση", a_activate_h:"Απαιτούνται όλα τα έγγραφα εγκεκριμένα και υπογεγραμμένη σύμβαση.",
+    c_name:`Όνομα = ${B.eid}`, c_sp:"Αρ. Παροχής = δήλωση πελάτη", c_addr:"Διεύθυνση = δήλωση", c_date:"Ημερομηνία < 3 μήνες", c_idno:`Αρ. ταυτότητας = ${B.eid}`,
+    f_name:"Ονοματεπώνυμο", f_sp:"Αριθμός Παροχής", f_addr:"Διεύθυνση", f_date:"Ημερομηνία έκδοσης", f_issuer:"Εκδότης", f_idno:"Αριθμός", f_type:"Τύπος", f_lessee:"Μισθωτής", f_start:"Έναρξη μίσθωσης", f_owner:"Ιδιοκτήτης",
+    ev_upload:"Ανέβηκε", ev_reupload:"Ανέβηκε ξανά", ev_approve:"Εγκρίθηκε από agent", ev_reject:"Απορρίφθηκε από agent", ev_sign:"Σύμβαση υπεγράφη", ev_act:"Προωθήθηκε για ενεργοποίηση"
+  },
+  en:{
+    exit:"Exit", newApp:"New application", stepOf:(a,b)=>`Step ${a} of ${b}`,
+    steps:{ offers_1:"Offers", offers_2:"Offers", offers_3:"Offers", identity:"Identity", eligibility:"Check", product:"Plan", customer:"Details", documents:"Documents", payment:"Payment", contract:"Sign" },
+    start_h:"What would you like to set up?", start_p:`The whole process is online and takes a few minutes. You'll need ${B.eid} and your mobile.`,
+    j_electricity:"Electricity", j_el_d:"A new electricity contract", j_fiber:"Fiber", j_fb_d:"A new fiber connection", j_bundle:"Electricity + Fiber", j_bn_d:"Both together, with a bundle discount",
+    id_h:"Confirm who is signing", id_p:`We retrieve your name and tax number from ${B.eid} once, with your approval.`,
+    id_btn:`Continue with ${B.eid}`, id_ok:"You're verified", id_fail:`${B.eid} returned no record. Try again${B.support?" or call "+B.support:" or contact us"}.`, id_retry:"Try again", demo_up:"Sample scans", demo_up_mis:"Samples with a mismatch", confirm_new:"Start a new application? The current one will stay incomplete.", v_optional:"optional", v_digit:"digit", afm_hint:"9 digits, no spaces.", phone_why_id:"We send a code to confirm this mobile is yours.", phone_why_sig:"This is where the contract signing code will be sent.", phone_why_locked:"Verified during identification; cannot be changed here.", otp_log:"no SMS provider: the code is written to the service log", simulated:"simulated", ad_opt_h:"If you add it, we check fiber availability and let you know.", d_ID_h:"Photo of both sides, or the passport page.", d_SUPPLY_h:"Up to 3 months old, supply point number visible.", d_OWNERSHIP_h:"Registered lease or title deed.", do_uploaded:"Uploaded and being checked.", of_added:"Added.", of_declined:"OK, no change.", progress:"Progress", e_fix:"Fix the highlighted fields.", e_network:"No connection. Try again.", e_session:"Session expired. Start again.", e_consents:"Tick the four required boxes.", e_otp_incomplete:"Enter all 6 digits.", e_otp_wrong:"That code isn't right.", e_otp_lock:"Three wrong attempts — request a new code.", e_otp_expired:"The code expired — request a new one.", e_file_large:"File is over 8 MB.", e_name_required:"Enter your full name.", e_afm_format:"Tax ID is 9 digits.", e_phone_format:"Enter a 10-digit mobile number.", e_phone_locked_manual:"Mobile was verified during identification and cannot change.", e_email_format:"Enter a valid email, e.g. name@example.com.", e_supply_point_format:"Supply point number is 9–14 digits.", e_supply_point_pending_switch:"A supplier switch is already pending on this supply point. We'll be in touch.", e_address_required:"Enter street, number and postcode.", e_no_coverage:"No fiber coverage here yet.", e_sku_required:"Choose a plan.", e_sku_unknown:"That plan isn't available.", e_assurance_too_low:"This plan requires e-ID identification.", e_payment_required:"Choose a payment method.", e_payment_mandate_required:"Fiber requires a standing order or card.", e_docs_missing:"Upload all documents to continue.", e_offer_unavailable:"That offer is no longer available.", e_identity_first:"Complete identification first.", e_required_consents_missing:"Tick the required boxes.",  of_h1:"Fiber is available too", of_h2:"Before you continue", of_h3:"Anything else?", of_p:"Optional. You can continue without changes.", of_add:"Add", of_swap:"Upgrade", of_no:"No thanks", of_skip:"Continue without changes", of_kind_upsell:"Upgrade", of_kind_cross_sell:"Bundle", of_kind_addon:"Add-on", of_child:"New contract for the add-on — your details were carried over.", ad_opt:"Optional: address, to check fiber availability", id_or:"or", id_manual:`Without ${B.eid}: enter details and upload ID`, id_m_h:"Your details", id_m_p:"We verify your mobile now and your identity from the ID document you upload. Agent review is mandatory on this route.", id_m_send:"Send code", id_m_verify:"Verify", id_m_ok:"Mobile verified. An ID document is required in the documents step.", id_m_back:`Use ${B.eid} instead`, asr_sub:`Substantial assurance (${B.eid})`, asr_low:"Low assurance (mobile + ID document)",
+    sheet_h:`Approve in ${B.eid}`, sheet_p:`${B.name} is requesting the following:`, sheet_name:"Full name", sheet_afm:"Tax number (AFM)", sheet_id:"ID number", sheet_ok:"Approve", sheet_no:"Decline",
+    el_h:"Let's check what we can supply", el_p:"We check before showing plans.",
+    sp_l:"Supply point number", sp_h:"Printed on any electricity bill for the property.", sp_btn:"Check supply point", sp_ok:"This supply point is available for a new contract.", sp_bad:"A supplier switch is already pending. We'll be in touch.",
+    ad_l:"Installation address", ad_h:"Street, number, postcode.", ad_btn:"Check coverage", ad_ok:"Fiber is available here, up to 1 Gbps.", ad_bad:"No fiber coverage at this address yet.",
+    bn_partial:"Fiber isn't available here. Continue with electricity only, without the bundle discount.", bn_cont:"Continue with electricity only",
+    pr_h:"Choose a plan", pr_p:"Placeholder prices.", pr_bn_h:"Your bundle", pr_bn_tag:"Bundle discount", pr_bn_p:"Two separate contracts, one signature.",
+    per_kwh:"€/kWh", per_mo:"€/month", fixed:"Fixed price", months:"months", nofix:"No commitment",
+    cu_h:"Your contact details", cu_p:`Name and tax number come from ${B.eid}. Your mobile receives the signing code.`,
+    name:"Full name", afm:"Tax number (AFM)", email:"Email", email_h:"Where we send the contract.", phone:"Mobile", phone_h:"For the one-time code.",
+    do_h:"Upload your documents", do_p:"A phone photo is fine. An agent will check them; you can continue to signing meanwhile.", upload:"Upload", reupload:"Upload again",
+    d_ID:"ID card or passport", d_SUPPLY:"A recent electricity bill", d_OWNERSHIP:"Lease or title deed",
+    st_pending:"Under review", st_approved:"Approved", st_rejected:"Rejected", st_none:"Missing",
+    pa_h:"How you'll pay", pa_p_el:"Each bill separately, or a standing order.", pa_p_fb:"Fiber requires a standing order.",
+    p_inv:"Each bill separately", p_inv_d:"No mandate", p_sepa:"Bank standing order", p_sepa_d:"Paid automatically", p_card:"Card", p_card_d:"Charged automatically",
+    co_h:"Review and sign", co_p:"You have 14 days to withdraw, including online.",
+    c_price:"Price", c_dur:"Duration", c_exit:"Leaving", c_sign:"Signed by",
+    pre_h:"Pre-contract information", pre_1:`Supplier: ${B.supplier} The contract starts once the supply is activated.`, wd_h:"Right of withdrawal", wd_1:`Withdraw within 14 days without giving a reason, from ${B.name} or with the form.`, gd_h:"Personal data", gd_1:"Name and tax number are kept to perform the contract and meet legal obligations.",
+    k_pre:"I received and read the pre-contract information.", k_terms:"I accept the contract terms.", k_wd:"I know I can withdraw within 14 days.", k_gdpr:"I've read the privacy notice.", k_mkt:"Optional: tell me about offers.",
+    otp_h:"Sign with a one-time code", otp_p:p=>`We'll send a 6-digit code to ${p}.`, otp_send:"Send code", otp_sent:p=>`Code sent to ${p}.`, otp_sign:"Sign", otp_resend:"New code", otp_bad:"That code isn't right.", otp_lock:"Three wrong attempts.", otp_need:"Tick all four required boxes.",
+    ok_h:"Your contract is signed", ok_p:"We've emailed you a copy.", ok_ref:"Reference",
+    next_h:"What happens next", n_docs:"Document check", n_docs_d:"An agent is checking your documents. We'll let you know if anything is needed.", n_docs_rej:"A document was rejected. Please upload it again.", n_docs_ok:"All documents approved.", n_el:"Supply activation", n_el_d:"We notify the grid operator once documents are approved.", n_fb:"Installation appointment", n_fb_d:"We'll call within 3 working days.", n_wd:"Withdraw until", n_wd_d:`From ${B.name}, no reason needed.`, n_fix:"Fix documents", n_home:`Back to ${B.name}`,
+    back:"Back", cont:"Continue", demo:"Prototype settings", simf:"Identity failure", sims:"Pending switch", simc:"No coverage", simo:"Wrong code", simm:"Upload with mismatch", clear:"Clear all data",
+    a_queue:"Applications", a_empty:"No applications. Complete one as a customer.", a_pick:"Select an application from the list.", a_docs:"Documents", a_extract:"Extracted fields", a_checks:"Cross-checks", a_conf:"OCR confidence",
+    a_journey:"Application", a_plan:"Plan", a_sp:"Supply point", a_addr:"Installation address", a_kyc:"Identity", a_kyc_v:`${B.eid}`, a_contact:"Contact", a_pay:"Payment", a_signed:"Signature", a_status:"Status",
+    s_draft:"In progress", s_review:"To review", s_signed:"Signed · documents in review", s_approved:"Approved", s_returned:"Returned to customer", s_active:"Sent for activation",
+    a_approve:"Approve", a_reject:"Reject", a_reject_h:"Rejection reason", a_reject_send:"Return to customer", a_cancel:"Cancel", a_note:"Note to customer (optional)",
+    r_illegible:"Illegible", r_wrong_document:"Wrong document type", r_name_mismatch:"Name doesn't match", r_expired:"Expired or too old", r_other:"Other",
+    a_notup:"Not uploaded yet", a_pdf:"PDF — no preview", a_uploaded:"Uploaded", a_log:"History", a_activate:"Send for activation", a_activate_h:"Requires all documents approved and a signed contract.",
+    c_name:`Name = ${B.eid}`, c_sp:"Supply point = customer entry", c_addr:"Address = customer entry", c_date:"Issued < 3 months ago", c_idno:`ID number = ${B.eid}`,
+    f_name:"Full name", f_sp:"Supply point", f_addr:"Address", f_date:"Issue date", f_issuer:"Issuer", f_idno:"Number", f_type:"Type", f_lessee:"Lessee", f_start:"Lease start", f_owner:"Owner",
+    ev_upload:"Uploaded", ev_reupload:"Re-uploaded", ev_approve:"Approved by agent", ev_reject:"Rejected by agent", ev_sign:"Contract signed", ev_act:"Sent for activation"
+  }
+};
+
+/* ═══════════════════════════ ENGINE ═══════════════════════════
+   Client-side block connector. Mirrors _shared/blocks.ts:
+   BLOCKS_UI[id] = { title, lead?, render(ctx), collect(root), validate(payload), submit(payload, ctx), after?(result, ctx), footer? }
+   The engine renders the block the server says is active, validates on blur + on submit,
+   maps server field errors back to inputs, and never disables the primary button.
+   ═══════════════════════════════════════════════════════════════ */
+let lang=(B.locale==="en"?"en":"el"), role="customer"; const t=k=>T[lang][k]??k;
+const BASE=(location.pathname.includes("/functions/v1/")?location.origin+"/functions/v1":location.origin);
+const $=(sel,root=document)=>root.querySelector(sel), $$=(sel,root=document)=>[...root.querySelectorAll(sel)];
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const mask=p=>p?p.replace(/\d(?=\d{3})/g,"•"):"—";
+const fmtT=iso=>new Date(iso).toLocaleString(lang==="el"?"el-GR":"en-GB",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"});
+
+/* api */
+let agentToken=""; try{ agentToken=sessionStorage.getItem("agentToken")||""; }catch(e){}
+class ApiError extends Error{ constructor(msg,status,field){ super(msg); this.status=status; this.field=field; } }
+let api=async function(path,{method="GET",body,form,token}={}){
+  const h={}; if(token) h.authorization="Bearer "+token; if(role==="agent"&&agentToken) h["x-agent-token"]=agentToken; if(body) h["content-type"]="application/json";
+  let r; try{ r=await fetch(BASE+path,{method,headers:h,body:form?form:body?JSON.stringify(body):undefined}); }catch(e){ throw new ApiError("network",0); }
+  const j=await r.json().catch(()=>({})); if(!r.ok) throw new ApiError(j.error||r.statusText,r.status,j.field||null); return j;
+}
+
+/* announce (screen readers) + toast */
+let announce=function(msg){ const el=$("#live"); el.textContent=""; setTimeout(()=>el.textContent=msg,30); }
+let toast=function(msg,kind="info"){ const el=$("#toast"); el.className="toast "+kind+" show"; el.textContent=msg; clearTimeout(toast._t); toast._t=setTimeout(()=>el.classList.remove("show"),3200); }
+
+/* session: only id + token + ui state in the browser */
+let S=null, R=null;
+function newSession(){ S={id:null,token:null,journey:null,idx:0,con:{},otp:false,otpVia:"",idMode:null,sim:{},childNote:false,lastOffers:null}; R=null; saveS(); }
+function saveS(){ try{ sessionStorage.setItem("cust",JSON.stringify(S)); }catch(e){} }
+async function refresh(){ if(!S.id) return; R=await api("/applications/"+S.id,{token:S.token}); }
+const A=()=>R?.application||{};
+const prod=id=>R?.catalogue?.products?.[id];
+const pname=id=>{ const p=prod(id); return p?(lang==="el"?p.name_el:p.name_en):id; };
+const pprice=id=>{ const p=prod(id); return p?`${p.price} ${p.unit}`:""; };
+const pdur=id=>{ const p=prod(id); return p?.fixed_months?`${p.fixed_months} ${t("months")}`:t("nofix"); };
+const docList=()=>R?.required_docs||[];
+const docByType=d=>(R?.documents||[]).find(x=>x.doc_type===d);
+function blocks(){ if(!R?.blocks) return []; return R.blocks.filter(b=>!b.startsWith("offers_")||(R.offers?.[b]||[]).length||S.lastOffers===b); }
+function curBlock(){ const b=blocks(); return b[Math.min(S.idx,b.length-1)]; }
+function idxOf(id){ return blocks().indexOf(id); }
+function nextAfter(id){ const full=R?.blocks||[]; const pos=full.indexOf(id); for(const b of blocks()) if(full.indexOf(b)>pos) return b; return null; }
+async function goTo(i){ S.idx=Math.max(0,Math.min(blocks().length-1,i)); saveS(); await render(); window.scrollTo({top:0,behavior:"smooth"}); }
+const visibleSteps=()=>blocks().filter(b=>b!=="activation"&&!b.startsWith("offers_"));
+
+/* ═══════════════════════════ COMPONENTS ═══════════════════════════ */
+const F={
+  text({id,label,value="",hint="",why="",type="text",inputmode,autocomplete,maxlength,locked=false,optional=false,placeholder=""}){
+    return `<div class="field" data-field="${id}"><label for="${id}">${esc(label)}${optional?` <span class="opt">${t("v_optional")}</span>`:""}</label>
+      ${why?`<p class="why" id="${id}-why">${esc(why)}</p>`:""}
+      <div class="inwrap"><input id="${id}" name="${id}" type="${type}" value="${esc(value)}" ${inputmode?`inputmode="${inputmode}"`:""} ${autocomplete?`autocomplete="${autocomplete}"`:""} ${maxlength?`maxlength="${maxlength}"`:""} ${locked?"disabled":""} ${placeholder?`placeholder="${esc(placeholder)}"`:""} aria-describedby="${id}-hint ${id}-err${why?" "+id+"-why":""}"><span class="ok-mark" aria-hidden="true">✓</span></div>
+      ${hint?`<p class="hint" id="${id}-hint">${esc(hint)}</p>`:`<p class="hint" id="${id}-hint" hidden></p>`}<p class="err" id="${id}-err" role="alert" hidden></p></div>`;
+  },
+  choice({name,options,value,columns=1}){
+    return `<div class="choices" data-field="${name}" role="radiogroup" style="--cols:${columns}">${options.map(o=>`<label class="choice ${value===o.value?"sel":""} ${o.disabled?"dis":""}"><input type="radio" name="${name}" value="${esc(o.value)}" ${value===o.value?"checked":""} ${o.disabled?"disabled":""}><span class="ci"></span><span class="ct"><b>${esc(o.label)}</b>${o.desc?`<span>${esc(o.desc)}</span>`:""}</span>${o.right?`<span class="cr">${o.right}</span>`:""}</label>`).join("")}<p class="err" id="${name}-err" role="alert" hidden></p></div>`;
+  },
+  check({id,label,checked=false,required=true}){ return `<label class="check"><input type="checkbox" id="${id}" data-con="${id}" ${checked?"checked":""}><span>${label}${required?"":` <span class="opt">${t("v_optional")}</span>`}</span></label>`; },
+  alert(kind,html){ return `<div class="alert ${kind}" role="${kind==="err"?"alert":"status"}"><span class="ai"></span><div>${html}</div></div>`; },
+  otp(id="otp"){ return `<div class="otp" id="${id}" role="group" aria-label="${t("otp_h")}">${[0,1,2,3,4,5].map(i=>`<input inputmode="numeric" pattern="[0-9]*" maxlength="1" aria-label="${t("v_digit")} ${i+1}" autocomplete="${i===0?"one-time-code":"off"}">`).join("")}</div><p class="err" id="${id}-err" role="alert" hidden></p>`; },
+  skeleton(n=3){ return `<div class="card">${Array.from({length:n},()=>`<div class="sk"></div>`).join("")}</div>`; },
+};
+function setErr(root,field,msg){ const wrap=$(`[data-field="${field}"]`,root); if(!wrap) return false; wrap.classList.toggle("has-err",!!msg); wrap.classList.remove("has-ok"); const e=$(".err",wrap); if(e){ e.textContent=msg||""; e.hidden=!msg; } return !!msg; }
+function setOk(root,field){ const wrap=$(`[data-field="${field}"]`,root); if(wrap){ wrap.classList.remove("has-err"); wrap.classList.add("has-ok"); const e=$(".err",wrap); if(e) e.hidden=true; } }
+function focusFirstError(root){ const w=$(".has-err",root); if(!w) return; const i=$("input,select,textarea",w); (i||w).focus({preventScroll:false}); w.scrollIntoView({block:"center",behavior:"smooth"}); }
+const otpValue=root=>$$("#otp input",root).map(i=>i.value).join("");
+function wireOtp(root){ $$("#otp input",root).forEach((el,i,a)=>{ el.addEventListener("input",()=>{ const v=el.value.replace(/\D/g,""); if(v.length>1){ v.split("").forEach((c,j)=>{ if(a[i+j]) a[i+j].value=c; }); (a[Math.min(i+v.length,5)]).focus(); return; } el.value=v; if(v&&a[i+1]) a[i+1].focus(); }); el.addEventListener("keydown",e=>{ if(e.key==="Backspace"&&!el.value&&a[i-1]) a[i-1].focus(); }); el.addEventListener("paste",e=>{ const d=(e.clipboardData.getData("text")||"").replace(/\D/g,"").slice(0,6); if(d.length===6){ e.preventDefault(); d.split("").forEach((c,j)=>a[j].value=c); a[5].focus(); } }); }); setTimeout(()=>$("#otp input",root)?.focus(),60); }
+
+/* validators — same rules as the server, applied on blur + submit; server remains the authority */
+const V={
+  name:v=>v.trim()?null:"name_required",
+  afm:v=>/^\d{9}$/.test(v.replace(/\s/g,""))?null:"afm_format",
+  phone:v=>v.replace(/\D/g,"").length>=10?null:"phone_format",
+  email:v=>/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v.trim())?null:"email_format",
+  supply_point:v=>/^\d{9,14}$/.test(v.replace(/\s/g,""))?null:"supply_point_format",
+  address:v=>v.trim().length>=5?null:"address_required",
+  addressOpt:v=>(!v.trim()||v.trim().length>=5)?null:"address_required",
+};
+function wireBlur(root,rules){ for(const [f,rule] of Object.entries(rules)){ const i=$(`#${f}`,root); if(!i) continue; i.addEventListener("blur",()=>{ if(!i.value&&rules[f]===V.addressOpt) return setErr(root,f,null); const k=rule(i.value); k?setErr(root,f,t("e_"+k)):setOk(root,f); }); i.addEventListener("input",()=>{ if($(`[data-field="${f}"]`,root)?.classList.contains("has-err")&&!rule(i.value)) setOk(root,f); }); } }
+
+/* ═══════════════════════════ BLOCKS (UI) ═══════════════════════════ */
+const BLOCKS_UI={
+  start:{ title:()=>t("start_h"), lead:()=>t("start_p"), footer:false,
+    render(){ return `<div class="jgrid">${["electricity","fiber","bundle"].map((j,i)=>`<button class="jcard" data-j="${j}"><span class="ic">${["⚡","◎","⚡◎"][i]}</span><b>${t("j_"+j)}</b><span>${t(["j_el_d","j_fb_d","j_bn_d"][i])}</span></button>`).join("")}</div>`; },
+    wire(root){ $$("[data-j]",root).forEach(el=>el.onclick=()=>run(async()=>{ const r=await api("/applications",{method:"POST",body:{journey:el.dataset.j}}); S.id=r.id; S.token=r.token; S.journey=r.journey; S.idx=0; saveS(); await refresh(); })); }
+  },
+
+  identity:{ title:()=>S.idMode==="manual"?t("id_m_h"):t("id_h"), lead:()=>S.idMode==="manual"?t("id_m_p"):t("id_p"),
+    render(){ const k=A().kyc; const man=k&&k.method==="manual";
+      if(k&&(!man||k.phone_verified)) return `<div class="card">${F.alert("ok",`<b>${t("id_ok")}</b><br>${esc(k.name)} · ${t("afm")} ${esc(k.afm)}<br><span class="faint small">${man?t("asr_low"):t("asr_sub")}</span>`)}${man?F.alert("warn",t("id_m_ok")):""}</div>`;
+      if(S.idMode==="manual"){ const verifying=man&&!k.phone_verified;
+        return `<div class="card">${F.text({id:"name",label:t("name"),value:k?.name||S.man?.name||"",autocomplete:"name",locked:verifying})}${F.text({id:"afm",label:t("afm"),value:k?.afm||S.man?.afm||"",inputmode:"numeric",maxlength:9,hint:t("afm_hint"),locked:verifying})}${F.text({id:"phone",label:t("phone"),value:A().phone||S.man?.phone||"",inputmode:"tel",autocomplete:"tel",why:t("phone_why_id"),locked:verifying})}
+          ${verifying?`<p class="muted small">${t("otp_sent")(mask(A().phone))}${S.otpVia==="server-log"?` <span class="faint">(${t("otp_log")})</span>`:""}</p>${F.otp()}<div class="row"><button class="btn primary" data-act="manverify">${t("id_m_verify")}</button><button class="btn link" data-act="mansend">${t("otp_resend")}</button></div>`:`<button class="btn primary big" data-act="mansend">${t("id_m_send")}</button>`}
+        </div><p class="center"><button class="btn link" data-act="useeid">${t("id_m_back")}</button></p>`; }
+      return `<div class="card center-stack">${S.sim.failId?F.alert("err",t("id_fail")):""}<button class="btn primary big" data-act="gov"><span class="gov">ID</span>${S.sim.failId?t("id_retry"):t("id_btn")}</button><p class="faint small">${B.eid}: ${t("simulated")}</p><div class="or"><span>${t("id_or")}</span></div><button class="btn secondary big" data-act="manual">${t("id_manual")}</button></div>`; },
+    wire(root){ wireBlur(root,{name:V.name,afm:V.afm,phone:V.phone}); if($("#otp",root)) wireOtp(root); },
+    hideContinue(){ const k=A().kyc; return !(k&&(k.method!=="manual"||k.phone_verified)); },
+    actions:{
+      gov(){ openSheet(); },
+      manual(){ S.idMode="manual"; S.man={}; saveS(); render(); },
+      useeid(){ S.idMode=null; S.man=null; saveS(); render(); },
+      async mansend(root){ if(!(A().kyc&&A().kyc.method==="manual")){ const p={name:$("#name",root).value,afm:$("#afm",root).value,phone:$("#phone",root).value}; let bad=false; for(const [f,rule] of Object.entries({name:V.name,afm:V.afm,phone:V.phone})){ const k=rule(p[f]); if(k){ setErr(root,f,t("e_"+k)); bad=true; } } if(bad){ focusFirstError(root); return false; } S.man=p; await api("/applications/"+S.id+"/blocks/identity",{method:"POST",body:{method:"manual",...p},token:S.token}); }
+        const r=await api("/otp/send",{method:"POST",body:{application_id:S.id,purpose:"identity"},token:S.token}); S.otpVia=r.delivered_via; saveS(); await refresh(); toast(t("otp_sent")(mask(A().phone))); },
+      async manverify(root){ const code=otpValue(root); if(code.length!==6){ $("#otp-err",root).textContent=t("e_otp_incomplete"); $("#otp-err",root).hidden=false; $("#otp input",root).focus(); return false; }
+        try{ await api("/otp/verify",{method:"POST",body:{application_id:S.id,purpose:"identity",code},token:S.token}); S.idMode=null; saveS(); await refresh(); announce(t("id_ok")); }catch(e){ $("#otp-err",root).textContent=t("e_otp_wrong")+(e.status===429?" "+t("e_otp_lock"):""); $("#otp-err",root).hidden=false; $$("#otp input",root).forEach(i=>i.value=""); $("#otp input",root).focus(); return false; } }
+    }
+  },
+
+  eligibility:{ title:()=>t("el_h"), lead:()=>t("el_p"),
+    render(){ const a=A(); const el=a.journey!=="fiber", fb=a.journey!=="electricity", opt=a.journey==="electricity"; const done=a.state!=="IDENTIFIED"&&(!el||a.supply_point)&&(!fb||a.address);
+      return `<div class="card">${el?F.text({id:"supply_point",label:t("sp_l"),value:a.supply_point||"",inputmode:"numeric",hint:t("sp_h"),locked:done})+(done&&a.supply_point?F.alert("ok",t("sp_ok")):""):""}
+        ${(fb||opt)?F.text({id:"address",label:t("ad_l"),value:a.address||"",autocomplete:"street-address",hint:opt?t("ad_opt_h"):t("ad_h"),optional:opt,locked:done})+(done&&a.address?F.alert(a.fiber_serviceable?"ok":"warn",a.fiber_serviceable?t("ad_ok"):t("ad_bad")):""):""}</div>`; },
+    wire(root){ const a=A(); wireBlur(root,{supply_point:V.supply_point,address:a.journey==="electricity"?V.addressOpt:V.address}); },
+    collect(root){ const p={}; if($("#supply_point",root)) p.supply_point=$("#supply_point",root).value; if($("#address",root)) p.address=$("#address",root).value; if(S.sim.sims) p.simulate_pending_switch=true; if(S.sim.simc) p.simulate_no_coverage=true; return p; },
+    validate(p){ const a=A(), e={}; if(a.journey!=="fiber"){ const k=V.supply_point(p.supply_point||""); if(k) e.supply_point=k; } const rule=a.journey==="electricity"?V.addressOpt:V.address; const k2=rule(p.address||""); if(k2) e.address=k2; return e; },
+    skipSubmit(){ const a=A(); return a.state!=="IDENTIFIED"&&(a.journey==="fiber"||a.supply_point)&&(a.journey==="electricity"||a.address); },
+    async submit(p){ await api("/applications/"+S.id+"/blocks/eligibility",{method:"POST",body:p,token:S.token}); }
+  },
+
+  offers_1:{ title:()=>t("of_h1"), lead:()=>t("of_p"), render(){ return offersHtml("offers_1"); }, wire(root){ wireOffers(root,"offers_1"); }, continueLabel:()=>t("of_skip") },
+  offers_2:{ title:()=>t("of_h2"), lead:()=>t("of_p"), render(){ return offersHtml("offers_2"); }, wire(root){ wireOffers(root,"offers_2"); }, continueLabel:()=>t("of_skip") },
+  offers_3:{ title:()=>t("of_h3"), lead:()=>t("of_p"), render(){ return offersHtml("offers_3"); }, wire(root){ wireOffers(root,"offers_3"); }, continueLabel:()=>t("n_home"), async submit(){ newSession(); } , back:false },
+
+  product:{ title:()=>A().journey==="bundle"?t("pr_bn_h"):t("pr_h"), lead:()=>A().journey==="bundle"?t("pr_bn_p"):t("pr_p"),
+    render(){ const a=A(), cat=R.catalogue;
+      if(a.journey==="bundle"){ const c=cat.bundles["BN-EL-FB"].components; return `<div class="card"><span class="tag ok">${t("pr_bn_tag")}</span>${c.map(id=>`<div class="line"><div><b>${esc(pname(id))}</b><span class="desc">${pdur(id)}</span></div><b class="price">${pprice(id)}</b></div>`).join("")}</div>`; }
+      const fam=a.journey==="fiber"?"fiber":"electricity"; const ids=Object.keys(cat.products).filter(i=>cat.products[i].family===fam&&cat.products[i].kind==="core"); const sel=(a.products||[]).find(p=>ids.includes(p))||S.selSku;
+      return `<div class="card">${F.choice({name:"sku",value:sel,options:ids.map(id=>({value:id,label:pname(id),desc:`${pdur(id)} · ${prod(id).exit_el}`,right:`<b>${pprice(id)}</b><span class="faint small">${t("pr_p")}</span>`}))})}</div>`; },
+    wire(root){ $$('input[name="sku"]',root).forEach(el=>el.onchange=()=>{ S.selSku=el.value; $$(".choice",root).forEach(c=>c.classList.toggle("sel",c.contains(el))); setErr(root,"sku",null); }); },
+    collect(root){ return { sku:$('input[name="sku"]:checked',root)?.value||"" }; },
+    validate(p){ return (A().journey!=="bundle"&&!p.sku)?{sku:"sku_required"}:{}; },
+    async submit(p){ await api("/applications/"+S.id+"/blocks/product",{method:"POST",body:p,token:S.token}); }
+  },
+
+  customer:{ title:()=>t("cu_h"), lead:()=>t("cu_p"),
+    render(){ const a=A(); const man=a.kyc?.method==="manual";
+      return `<div class="card">${F.text({id:"kname",label:t("name"),value:a.kyc.name,locked:true})}${F.text({id:"kafm",label:t("afm"),value:a.kyc.afm,locked:true})}${F.text({id:"email",label:t("email"),value:a.email||"",type:"email",autocomplete:"email",inputmode:"email",why:t("email_h")})}${F.text({id:"phone",label:t("phone"),value:a.phone||"",inputmode:"tel",autocomplete:"tel",why:man?t("phone_why_locked"):t("phone_why_sig"),locked:man})}</div>`; },
+    wire(root){ wireBlur(root,{email:V.email,phone:V.phone}); },
+    collect(root){ return { email:$("#email",root).value, phone:$("#phone",root).value }; },
+    validate(p){ const e={}; if(V.email(p.email)) e.email="email_format"; if(V.phone(p.phone)) e.phone="phone_format"; return e; },
+    async submit(p){ await api("/applications/"+S.id+"/blocks/customer",{method:"POST",body:p,token:S.token}); }
+  },
+
+  documents:{ title:()=>t("do_h"), lead:()=>t("do_p"),
+    render(){ return `<div class="card list">${docList().map(d=>{ const x=docByType(d); const st=x?x.status:"none";
+      return `<div class="docrow ${st}"><div class="th" aria-hidden="true">${x?"📄":"＋"}</div><div class="dt"><b>${t("d_"+d)}</b><span class="desc">${x?esc(x.file_name)+" · "+Math.round(x.bytes/1024)+" KB":t("d_"+d+"_h")}</span>${st==="rejected"?`<span class="desc err-text">${t("r_"+x.reject_reason)}${x.reject_note?" — "+esc(x.reject_note):""}</span>`:""}</div><div class="da"><span class="pill ${st}">${t("st_"+st)}</span>${(!x||st==="rejected")?`<button class="btn secondary sm" data-act="upload" data-id="${d}">${x?t("reupload"):t("upload")}</button>`:""}</div></div>`; }).join("")}<p class="err" id="docs-err" role="alert" hidden></p></div>`; },
+    actions:{ upload(root,el){ const d=el.dataset.id; const fp=$("#filePick"); fp.value=""; fp.onchange=()=>run(async()=>{ const f=fp.files[0]; if(!f) return; if(f.size>8*1024*1024){ toast(t("e_file_large"),"err"); return; } const form=new FormData(); form.append("application_id",S.id); form.append("doc_type",d); form.append("file",f); const btn=$(`[data-id="${d}"]`,root); if(btn){ btn.classList.add("busy"); btn.disabled=true; } await api("/extract",{method:"POST",form,token:S.token}); await refresh(); toast(t("do_uploaded")); }); fp.click(); } },
+    validate(){ const missing=docList().some(d=>!docByType(d)||docByType(d).status==="rejected"); return missing?{docs:"docs_missing"}:{}; },
+    skipSubmit:()=>true, refreshBefore:true
+  },
+
+  payment:{ title:()=>t("pa_h"), lead:()=>{ const fb=(A().products||[]).some(p=>prod(p)?.family==="fiber"); return fb?t("pa_p_fb"):t("pa_p_el"); },
+    render(){ const a=A(); const fb=(a.products||[]).some(p=>prod(p)?.family==="fiber"); const opts=[...(fb?[]:["invoice"]),"sepa","card"];
+      return `<div class="card">${F.choice({name:"method",value:a.payment||S.selPay,options:opts.map(o=>({value:o,label:t("p_"+o),desc:t("p_"+o+"_d")}))})}</div>`; },
+    wire(root){ $$('input[name="method"]',root).forEach(el=>el.onchange=()=>{ S.selPay=el.value; $$(".choice",root).forEach(c=>c.classList.toggle("sel",c.contains(el))); setErr(root,"method",null); }); },
+    collect(root){ return { method:$('input[name="method"]:checked',root)?.value||"" }; },
+    validate(p){ return p.method?{}:{method:"payment_required"}; },
+    async submit(p){ await api("/applications/"+S.id+"/blocks/payment",{method:"POST",body:p,token:S.token}); }
+  },
+
+  contract:{ title:()=>t("co_h"), lead:()=>t("co_p"),
+    render(){ const a=A(); const c=S.con;
+      return `${S.childNote?F.alert("warn",t("of_child")):""}${a.products.map(id=>`<div class="card"><h2 class="h2">${esc(pname(id))}</h2><dl class="kv"><dt>${t("c_price")}</dt><dd>${pprice(id)}</dd><dt>${t("c_dur")}</dt><dd>${pdur(id)}</dd><dt>${t("c_exit")}</dt><dd>${esc(prod(id)?.exit_el||"")}</dd><dt>${t("c_sign")}</dt><dd>${esc(a.kyc.name)}</dd></dl>
+        <details><summary>${t("pre_h")}</summary><div class="body">${t("pre_1")}</div></details><details><summary>${t("wd_h")}</summary><div class="body">${t("wd_1")}</div></details><details><summary>${t("gd_h")}</summary><div class="body">${t("gd_1")}</div></details></div>`).join("")}
+      <div class="card consents" data-field="consents">${[["precontract_info","k_pre"],["terms","k_terms"],["withdrawal","k_wd"],["privacy","k_gdpr"]].map(([k,l])=>F.check({id:k,label:t(l),checked:!!c[k]})).join("")}${F.check({id:"marketing",label:t("k_mkt"),checked:!!c.marketing,required:false})}<p class="err" id="consents-err" role="alert" hidden></p></div>
+      <div class="card"><h2 class="h2">${t("otp_h")}</h2>${S.otp?`<p class="muted small">${t("otp_sent")(mask(a.phone))}${S.otpVia==="server-log"?` <span class="faint">(${t("otp_log")})</span>`:""}</p>${F.otp()}<div class="row"><button class="btn primary" data-act="sign">${t("otp_sign")}</button><button class="btn link" data-act="sendotp">${t("otp_resend")}</button></div>`:`<p class="muted small">${t("otp_p")(mask(a.phone))}</p><button class="btn primary" data-act="sendotp">${t("otp_send")}</button>`}</div>`; },
+    wire(root){ $$("[data-con]",root).forEach(el=>el.onchange=()=>{ S.con[el.dataset.con]=el.checked; saveS(); if(Object.values(consentsOf()).length>=4) setErr(root,"consents",null); }); if($("#otp",root)) wireOtp(root); },
+    hideContinue:()=>true,
+    actions:{
+      async sendotp(root){ const cs=consentsOf(); if(["precontract_info","terms","withdrawal","privacy"].some(k=>!cs.includes(k))){ setErr(root,"consents",t("e_consents")); focusFirstError(root); return false; } const r=await api("/otp/send",{method:"POST",body:{application_id:S.id,consents:cs},token:S.token}); S.otp=true; S.otpVia=r.delivered_via; saveS(); await render(); toast(t("otp_sent")(mask(A().phone))); },
+      async sign(root){ const code=otpValue(root); if(code.length!==6){ $("#otp-err",root).textContent=t("e_otp_incomplete"); $("#otp-err",root).hidden=false; $("#otp input",root).focus(); return false; }
+        try{ await api("/otp/verify",{method:"POST",body:{application_id:S.id,code,consents:consentsOf()},token:S.token}); S.otp=false; S.childNote=false; saveS(); await refresh(); announce(t("ok_h")); await goTo(idxOf("activation")); }
+        catch(e){ $("#otp-err",root).textContent=t("e_otp_wrong")+(e.status===429?" "+t("e_otp_lock"):e.status===410?" "+t("e_otp_expired"):""); $("#otp-err",root).hidden=false; $$("#otp input",root).forEach(i=>i.value=""); $("#otp input",root).focus(); return false; } }
+    }
+  },
+
+  activation:{ title:()=>t("ok_h"), lead:()=>t("ok_p"), back:false, hero:true,
+    render(){ const a=A(); const wd=new Date(Date.parse(a.signed_at||Date.now())+14*864e5).toLocaleDateString(lang==="el"?"el-GR":"en-GB"); const docs=docList(); const st=docs.map(d=>docByType(d)?.status||"none"); const rej=st.includes("rejected"), allOk=docs.length&&st.every(s=>s==="approved"); let n=0; const fam=new Set((a.products||[]).map(p=>prod(p)?.family));
+      return `<div class="card"><p class="ref">${t("ok_ref")} <b>${a.id}</b></p><ol class="steps">${docs.length?`<li><i>${++n}</i><div><b>${t("n_docs")}</b><span>${rej?`<span class="err-text">${t("n_docs_rej")}</span>`:allOk?t("n_docs_ok"):t("n_docs_d")}</span>${rej?`<div class="row"><button class="btn secondary sm" data-act="fixdocs">${t("n_fix")}</button></div>`:""}</div></li>`:""}${fam.has("electricity")?`<li><i>${++n}</i><div><b>${t("n_el")}</b><span>${t("n_el_d")}</span></div></li>`:""}${fam.has("fiber")?`<li><i>${++n}</i><div><b>${t("n_fb")}</b><span>${t("n_fb_d")}</span></div></li>`:""}<li><i>${++n}</i><div><b>${t("n_wd")} ${wd}</b><span>${t("n_wd_d")}</span></div></li></ol></div>`; },
+    continueLabel:()=>(R.offers?.offers_3||[]).length?t("of_h3"):t("n_home"),
+    async submit(){ if((R.offers?.offers_3||[]).length) await goTo(idxOf("offers_3")); else newSession(); },
+    actions:{ async fixdocs(){ await goTo(idxOf("documents")); }, async refresh(){ await refresh(); await render(); } }
+  }
+};
+function consentsOf(){ return Object.entries(S.con).filter(([,v])=>v).map(([k])=>k); }
+function offersHtml(blk){ const list=R.offers?.[blk]||[]; S.lastOffers=blk;
+  return list.length?list.map(o=>{ const p=o.product; const nm=lang==="el"?p.name_el:p.name_en; const dur=p.fixed_months?`${p.fixed_months} ${t("months")}`:t("nofix");
+    return `<div class="card offer"><span class="tag">${t("of_kind_"+o.kind)}${o.discount_rule?" · "+o.discount_rule:""}</span><h2 class="h2">${esc(lang==="el"?o.headline_el:o.headline_en)}</h2><p class="muted">${esc(nm)} · ${p.price} ${esc(p.unit)} · ${dur}${o.replaces?` · ${esc(pname(o.replaces))} → ${esc(nm)}`:""}</p><div class="row"><button class="btn primary" data-offer="${o.id}" data-blk="${blk}" data-d="accepted">${o.replaces?t("of_swap"):t("of_add")}</button><button class="btn secondary" data-offer="${o.id}" data-blk="${blk}" data-d="declined">${t("of_no")}</button></div></div>`; }).join(""):`<div class="card faint">—</div>`; }
+function wireOffers(root,blk){ $$("[data-offer]",root).forEach(el=>el.onclick=()=>run(async()=>{ const r=await api("/applications/"+S.id+"/blocks/"+blk,{method:"POST",body:{offer_id:el.dataset.offer,decision:el.dataset.d},token:S.token});
+  if(r.child){ S.id=r.child.id; S.token=r.child.token; S.con={}; S.otp=false; S.childNote=true; S.lastOffers=null; await refresh(); const di=idxOf("documents"); S.idx=(di>=0&&docList().some(d=>!docByType(d)))?di:idxOf("contract"); saveS(); return; }
+  await refresh(); toast(el.dataset.d==="accepted"?t("of_added"):t("of_declined")); if(!(R.offers?.[blk]||[]).length&&blk!=="offers_3"){ const nx=nextAfter(blk); S.lastOffers=null; await goTo(idxOf(nx)); } })); }
+function openSheet(){ const k={name:"Δοκιμαστικός Πελάτης",afm:"0"+String(Math.floor(Math.random()*9e7)+1e7),id_no:"AK 123456"}; const sb=$("#sheetBg"),sh=$("#sheet");
+  sh.innerHTML=`<h2 id="sheet-h">${t("sheet_h")}</h2><p class="muted">${t("sheet_p")}</p><dl class="kv"><dt>${t("sheet_name")}</dt><dd><input id="kn" value="${k.name}" aria-label="${t("sheet_name")}"></dd><dt>${t("sheet_afm")}</dt><dd>${k.afm}</dd><dt>${t("sheet_id")}</dt><dd>${k.id_no}</dd></dl><div class="row"><button class="btn primary" id="shOk">${t("sheet_ok")}</button><button class="btn link" id="shNo">${t("sheet_no")}</button></div>`;
+  sb.classList.add("open"); $("#shOk",sh).focus(); $("#shOk",sh).onclick=()=>{ k.name=$("#kn",sh).value.trim()||k.name; sb.classList.remove("open"); run(async()=>{ await api("/applications/"+S.id+"/blocks/identity",{method:"POST",body:{method:"eid",...k},token:S.token}); S.sim.failId=false; await refresh(); announce(t("id_ok")); }); }; $("#shNo",sh).onclick=()=>sb.classList.remove("open"); }
+
+/* run with busy state + error surfacing */
+let busy=false;
+async function run(fn){ if(busy) return; busy=true; document.body.classList.add("busy"); let keep=false; try{ keep=(await fn())===false; }catch(e){ if(e instanceof ApiError&&e.status===0) toast(t("e_network"),"err"); else if(e instanceof ApiError&&e.status===404&&S.id){ newSession(); toast(t("e_session"),"err"); } else toast(t("e_"+e.message)!=="e_"+e.message?t("e_"+e.message):e.message,"err"); } busy=false; document.body.classList.remove("busy"); if(!keep) await render(); }
+
+/* primary action: validate → submit → advance */
+async function onContinue(root){ const id=curBlock(); const b=BLOCKS_UI[id]; if(!b) return;
+  if(b.refreshBefore&&S.id){ try{ await refresh(); }catch(e){} }
+  const payload=b.collect?b.collect(root):{}; const errs=b.validate?b.validate(payload):{}; let any=false; for(const [f,k] of Object.entries(errs)){ if(setErr(root,f,t("e_"+k))) any=true; else { const e=$(`#${f}-err`,root); if(e){ e.textContent=t("e_"+k); e.hidden=false; any=true; } } }
+  if(any){ focusFirstError(root); announce(t("e_fix")); return; }
+  await run(async()=>{ if(b.submit&&!(b.skipSubmit&&b.skipSubmit())){ try{ await b.submit(payload); }catch(e){ if(e instanceof ApiError&&e.field&&setErr(root,e.field,t("e_"+e.message)!=="e_"+e.message?t("e_"+e.message):e.message)){ focusFirstError(root); return false; } throw e; } }
+    if(S.id){ await refresh(); if(id==="activation"||id==="offers_3") return; const nx=nextAfter(id); S.lastOffers=null; await goTo(nx?idxOf(nx):S.idx+1); } });
+}
+
+/* ═══════════════════════════ RENDER ═══════════════════════════ */
+async function renderCustomer(){ const root=$("#app"); if(!S) newSession();
+  if(S.id&&!R){ root.innerHTML=`<div class="cwrap"><div class="cmain">${F.skeleton()}</div></div>`; try{ await refresh(); }catch(e){ newSession(); } }
+  const id=S.id?curBlock():"start"; const b=BLOCKS_UI[id]||BLOCKS_UI.start; const steps=visibleSteps(); const si=steps.indexOf(id);
+  const stepper=(id==="start"||b.hero||id.startsWith("offers_"))?"":`<nav class="stepper" aria-label="${t("progress")}"><ol>${steps.map((s,i)=>`<li class="${i<si?"done":i===si?"cur":""}" ${i===si?'aria-current="step"':""}><span class="dot">${i<si?"✓":i+1}</span><span class="lbl">${t("steps")[s]||s}</span></li>`).join("")}</ol><p class="stepof">${t("stepOf")(si+1,steps.length)}</p></nav>`;
+  const showCont=b.footer!==false&&!(b.hideContinue&&b.hideContinue()); const showBack=b.back!==false&&id!=="start"&&S.idx>0;
+  root.innerHTML=`<div class="cwrap">${stepper}<main class="cmain" id="main">${b.hero?`<div class="hero"><h1>${esc(b.title())}</h1><p>${esc(b.lead())}</p></div>`:`<h1 class="h1">${esc(b.title())}</h1>${b.lead?`<p class="lead">${esc(b.lead())}</p>`:""}`}<form id="blockForm" novalidate>${b.render()}</form></main>
+    ${(showCont||showBack)?`<footer class="cta"><div class="ctain">${showBack?`<button class="btn link" id="backBtn">${t("back")}</button>`:"<span></span>"}${showCont?`<button class="btn primary big" id="contBtn"><span class="spin" aria-hidden="true"></span><span>${esc(b.continueLabel?b.continueLabel():t("cont"))}</span></button>`:""}</div></footer>`:""}
+    <div class="demo" id="demo"><button type="button" id="demoToggle" class="btn link sm">${t("demo")}</button><div class="ctl" id="demoCtl"></div></div></div>`;
+  const form=$("#blockForm",root); form.onsubmit=e=>{ e.preventDefault(); if(showCont) onContinue(form); };
+  if(b.wire) b.wire(form);
+  $$("[data-act]",form).forEach(el=>el.onclick=e=>{ e.preventDefault(); const fn=b.actions?.[el.dataset.act]; if(fn) run(()=>fn(form,el)); });
+  if($("#contBtn")) $("#contBtn").onclick=e=>{ e.preventDefault(); onContinue(form); };
+  if($("#backBtn")) $("#backBtn").onclick=()=>goTo(S.idx-1);
+  // demo controls
+  const d=[]; if(id==="identity"&&!A().kyc) d.push(["simf",()=>{ S.sim.failId=true; render(); }]);
+  if(id==="eligibility"&&A().state==="IDENTIFIED"&&A().journey!=="fiber") d.push(["sims",()=>{ S.sim.sims=!S.sim.sims; toast((S.sim.sims?"ON ":"OFF ")+t("sims")); }]);
+  if(id==="eligibility"&&A().state==="IDENTIFIED"&&A().journey!=="electricity") d.push(["simc",()=>{ S.sim.simc=!S.sim.simc; toast((S.sim.simc?"ON ":"OFF ")+t("simc")); }]);
+  if(id==="documents"&&window.demoUpload){ d.push(["demo_up",()=>window.demoUpload(false)],["demo_up_mis",()=>window.demoUpload(true)]); }
+  const c=$("#demoCtl"); c.innerHTML=d.map(([k],i)=>`<button type="button" data-i="${i}">${t(k)}</button>`).join(""); $$("button",c).forEach(el=>el.onclick=d[+el.dataset.i][1]);
+  $("#demoToggle").onclick=()=>$("#demo").classList.toggle("on");
+  const h=$("h1",root); if(h){ h.setAttribute("tabindex","-1"); if(document.activeElement===document.body) h.focus({preventScroll:true}); }
+}
+
+/* ---------- agent console ---------- */
+let selApp=null, rejOpen=null, Q=[], REC=null, agentErr="";
+async function renderAgent(){
+  const root=document.getElementById("app");
+  if(!agentToken){ root.innerHTML=`<div class="cwrap"><div class="cmain"><div class="card"><h2>Agent token</h2><p class="muted small" style="margin:8px 0 14px">PROTO_AGENT_TOKEN from the Supabase project secrets.</p><div class="field"><input id="tok" type="password"></div><button class="btn" id="tokOk">OK</button></div></div></div>`; root.querySelector("#tokOk").onclick=()=>{ agentToken=root.querySelector("#tok").value.trim(); try{ sessionStorage.setItem("agentToken",agentToken); }catch(e){} render(); }; return; }
+  try{ Q=(await api("/applications")).applications; agentErr=""; }catch(e){ agentErr=e.message; if(/401/.test(e.message)||/token/.test(e.message)){ agentToken=""; try{ sessionStorage.removeItem("agentToken"); }catch(x){} return render(); } }
+  if(selApp&&!Q.find(a=>a.id===selApp)) selApp=null; if(!selApp&&Q.length) selApp=Q[0].id;
+  REC=selApp?await api("/applications/"+selApp):null;
+  root.innerHTML=`<div class="awrap"><aside class="queue"><h2>${t("a_queue")}<span class="faint">${Q.length}</span></h2>${Q.length?`<ul class="q">${Q.map(x=>{ const st=stateOf(x); return `<li class="${x.id===selApp?"sel":""}" data-open="${x.id}"><b>${esc(x.kyc.name)}</b><span class="m"><span>${t("j_"+x.journey)} · ${x.id}</span><span class="pill ${pillOf(st)}">${t("s_"+st)}</span></span></li>`; }).join("")}</ul>`:`<div class="empty">${agentErr?esc(agentErr):t("a_empty")}</div>`}</aside>
+  <section class="rec">${REC?recordView(REC):`<div class="card faint">${t("a_pick")}</div>`}</section></div>`;
+  root.querySelectorAll("[data-open]").forEach(el=>el.onclick=()=>{ selApp=el.dataset.open; rejOpen=null; render(); });
+  root.querySelectorAll("[data-ag]").forEach(el=>el.onclick=()=>AG[el.dataset.ag](el));
+  root.querySelectorAll("[data-zoom]").forEach(el=>el.onclick=()=>{ const lb=document.getElementById("lightbox"); lb.querySelector("img").src=el.dataset.zoom; lb.classList.add("open"); });
+}
+function stateOf(a){ const s=a.state||a.application?.state; return {RETURNED:"returned",ACTIVATED:"active",SUBMITTED:"approved",SIGNED:"signed",DOCS_VERIFIED:"approved",DOCS_PENDING:"review"}[s]||( (a.docs||[]).some(d=>d.status==="pending")?"review":"draft"); }
+function pillOf(st){ return st==="returned"?"rejected":st==="approved"||st==="active"?"approved":"pending"; }
+function recordView(r){ const a=r.application; const st=stateOf(a); const docs=r.required_docs; const canAct=a.signed_at&&!a.activated_at&&docs.every(d=>r.documents.find(x=>x.doc_type===d&&x.status==="approved"));
+  return `<div class="rhead"><div><h1>${esc(a.kyc.name)}</h1><div class="sub">${t("afm")} ${esc(a.kyc.afm)} · ${a.id} · ${fmtT(a.created_at)} · <span class="mono">${a.state}</span></div></div><div class="sp"></div><span class="pill ${pillOf(st)}" style="align-self:center">${t("s_"+st)}</span></div>
+  <div class="card"><div class="kvgrid"><div><span>${t("a_journey")}</span><b>${t("j_"+a.journey)}</b></div><div><span>${t("a_plan")}</span><b>${a.products?.length?a.products.map(id=>lang==="el"?r.catalogue.products[id].name_el:r.catalogue.products[id].name_en).join(" + "):"—"}</b></div>
+    ${a.journey!=="fiber"?`<div><span>${t("a_sp")}</span><b>${esc(a.supply_point)||"—"}</b></div>`:""}${a.journey!=="electricity"?`<div><span>${t("a_addr")}</span><b>${esc(a.address)||"—"}</b></div>`:""}
+    <div><span>${t("a_kyc")}</span><b>${a.kyc.method==="manual"?t("asr_low"):t("asr_sub")}${a.kyc.id_no?" · "+esc(a.kyc.id_no):""}${a.kyc.method==="manual"&&!a.kyc.phone_verified?" · <span style=\"color:var(--err)\">phone not verified</span>":""}</b></div><div><span>${t("a_contact")}</span><b>${esc(a.email)||"—"}<br>${esc(a.phone)||"—"}</b></div>
+    <div><span>${t("a_pay")}</span><b>${a.payment||"—"}</b></div><div><span>${t("a_signed")}</span><b>${a.signed_at?fmtT(a.signed_at):"—"}</b></div></div></div>
+  ${(a.offers||[]).length||a.parent_id?`<div class="card"><h3 style="margin-bottom:6px">Offers</h3>${a.parent_id?`<p class="small muted">Add-on of ${esc(a.parent_id)}</p>`:""}<table class="ext">${(a.offers||[]).map(o=>`<tr><td>${esc(o.offer_id)}</td><td><b>${esc(o.decision||"shown")}</b> <span class="faint small">×${o.shown}</span></td></tr>`).join("")}</table></div>`:""}
+  ${docs.length?`<h2>${t("a_docs")}</h2><div class="dgrid">${docs.map(d=>docCard(r,d)).join("")}</div>`:""}
+  ${r.evidence.length?`<div class="card"><h3 style="margin-bottom:8px">Evidence records</h3><table class="ext">${r.evidence.map(e=>`<tr><td>${e.id} · ${e.contract_id}</td><td class="mono small">${e.canonical_hash.slice(0,16)}… ← ${(e.prev_hash||"genesis").slice(0,12)}</td></tr>`).join("")}</table></div>`:""}
+  <div class="card"><div class="decision"><button class="btn sm ok" data-ag="activate" ${canAct?"":"disabled"}>${t("a_activate")}</button><span class="faint small">${t("a_activate_h")}</span></div></div>
+  <div class="card"><h3 style="margin-bottom:8px">${t("a_log")}</h3>${r.events.length?`<ul class="log">${r.events.map(l=>`<li><span>${fmtT(l.at)}</span><div><b>${esc(l.system)}</b> ${esc(l.event)} <span class="faint">${l.actor}</span>${l.detail?`<div class="faint small">${esc(JSON.stringify(l.detail)).slice(0,160)}</div>`:""}</div></li>`).join("")}</ul>`:`<p class="faint small">—</p>`}</div>`; }
+function docCard(r,d){ const x=r.documents.find(z=>z.doc_type===d);
+  if(!x) return `<div class="dcard"><div class="prev" style="cursor:default"><div class="none">${t("a_notup")}</div></div><div class="body"><h3>${t("d_"+d)}<span class="pill none">${t("st_none")}</span></h3></div></div>`;
+  const ex=x.extraction; const isImg=x.mime.startsWith("image/");
+  const prev=x.preview&&isImg?`<div class="prev" data-zoom="${x.preview}"><img src="${x.preview}" alt=""></div>`:`<div class="prev" style="cursor:default"><div class="none">${x.preview?`<a href="${x.preview}" target="_blank" rel="noopener">${t("a_pdf")}</a>`:t("a_pdf")}<br><span class="small">${esc(x.file_name)}</span></div></div>`;
+  return `<div class="dcard ${x.status}">${prev}<div class="body">
+    <h3>${t("d_"+d)}<span class="pill ${x.status}">${t("st_"+x.status)}</span></h3>
+    <p class="faint small">${t("a_uploaded")} ${fmtT(x.uploaded_at)} · ${esc(x.file_name)} · ${Math.round(x.bytes/1024)} KB · sha256 ${x.sha256.slice(0,12)}…</p>
+    ${ex?`<div><p class="faint small" style="margin-bottom:4px">${t("a_extract")} <span class="mono">${esc(ex.model)}</span>${ex.model.startsWith("stub")?` — <span style="color:var(--warn)">no extraction key set</span>`:""}</p><table class="ext">${Object.entries(ex.fields).map(([k,v])=>`<tr><td>${esc(k)}</td><td><b>${esc(v.value??"—")}</b> <span class="faint small">${Math.round((v.confidence||0)*100)}%</span></td></tr>`).join("")}</table></div>
+    <div><p class="faint small" style="margin-bottom:4px">${t("a_checks")} → <b>${esc(ex.recommendation)}</b></p><ul class="chk">${ex.checks.map(c=>`<li class="${c.ok===null?"warn":c.ok?"ok":"bad"}"><i>${c.ok===null?"?":c.ok?"✓":"✕"}</i><span>${esc(c.key)}${c.expected!=null||c.found!=null?`<span class="faint small"> · ${esc(c.found??"—")} vs ${esc(c.expected??"—")}</span>`:""}${c.note?`<span class="faint small"> · ${esc(c.note)}</span>`:""}</span></li>`).join("")}</ul></div>
+    <div><p class="faint small" style="margin-bottom:4px">${t("a_conf")} ${Math.round(ex.confidence*100)}% · ${ex.latency_ms} ms</p><div class="conf"><i style="width:${ex.confidence*100}%"></i></div></div>`:""}
+    ${x.status==="rejected"?`<p class="small" style="color:var(--err)">${t("r_"+x.reject_reason)}${x.reject_note?" — "+esc(x.reject_note):""}</p>`:""}
+    ${x.status==="pending"?(rejOpen===x.id?`<div class="rej"><b class="small">${t("a_reject_h")}</b><select id="rr">${["illegible","wrong_document","name_mismatch","expired","other"].map(r=>`<option value="${r}">${t("r_"+r)}</option>`).join("")}</select><textarea id="rn" rows="2" placeholder="${t("a_note")}"></textarea><div class="dact"><button class="btn sm danger" data-ag="rejectSend" data-id="${x.id}">${t("a_reject_send")}</button><button class="btn sm link" data-ag="rejectCancel">${t("a_cancel")}</button></div></div>`:`<div class="dact"><button class="btn sm ok" data-ag="approve" data-id="${x.id}">${t("a_approve")}</button><button class="btn sm danger" data-ag="reject" data-id="${x.id}">${t("a_reject")}</button></div>`):""}
+  </div></div>`; }
+const AG={
+  approve(el){ api("/review",{method:"POST",body:{application_id:selApp,document_id:el.dataset.id,action:"approve"}}).then(render).catch(e=>alert(e.message)); },
+  reject(el){ rejOpen=el.dataset.id; render(); }, rejectCancel(){ rejOpen=null; render(); },
+  rejectSend(el){ api("/review",{method:"POST",body:{application_id:selApp,document_id:el.dataset.id,action:"reject",reason:document.getElementById("rr").value,note:document.getElementById("rn").value.trim()}}).then(()=>{ rejOpen=null; render(); }).catch(e=>alert(e.message)); },
+  activate(){ api("/review",{method:"POST",body:{application_id:selApp,action:"activate"}}).then(render).catch(e=>alert(e.message)); }
+};
+
+
+
+/* ═══════════════════════════ SHELL ═══════════════════════════ */
+async function render(){
+  document.documentElement.lang=lang; document.title=B.name+" · e-Contract";
+  const bn=$("#brandName"); bn.innerHTML=`<i></i>${esc(B.name)}`;
+  const ex=$("#exit"); ex.textContent=role==="customer"?t("newApp"):t("exit");
+  if(role==="customer"){ if(!S){ try{ S=JSON.parse(sessionStorage.getItem("cust"))||null; }catch(e){} if(!S) newSession(); } await renderCustomer(); } else await renderAgent();
+}
+$$("#role button").forEach(b=>b.onclick=()=>{ role=b.dataset.r; $$("#role button").forEach(x=>x.setAttribute("aria-pressed",x===b?"true":"false")); rejOpen=null; render(); window.scrollTo({top:0}); });
+$$("#langSeg button").forEach(b=>b.onclick=()=>{ lang=b.dataset.l; $$("#langSeg button").forEach(x=>x.setAttribute("aria-pressed",x===b?"true":"false")); render(); });
+$("#exit").onclick=()=>{ if(role==="customer"){ if(S.id&&!A().signed_at&&!confirm(t("confirm_new"))) return; newSession(); render(); } else { agentToken=""; try{ sessionStorage.removeItem("agentToken"); }catch(e){} render(); } };
+$("#lightbox").onclick=e=>e.currentTarget.classList.remove("open");
+document.addEventListener("keydown",e=>{ if(e.key==="Escape"){ $("#sheetBg").classList.remove("open"); $("#lightbox").classList.remove("open"); } });
+render();
+
+</script>
+</body>
+</html>

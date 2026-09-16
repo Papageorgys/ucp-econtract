@@ -1,0 +1,57 @@
+/* ═══ STANDALONE DEMO ADAPTER — replaces api() with an in-browser implementation using the real block/offer/rules logic ═══ */
+const DEMO_KEY="econtract-demo-v4"; const DB={apps:{}}; try{ Object.assign(DB,JSON.parse(localStorage.getItem(DEMO_KEY)||"{}")); }catch(e){} DB.apps=DB.apps||{};
+const dbSave=()=>{ try{ localStorage.setItem(DEMO_KEY,JSON.stringify(DB)); }catch(e){} };
+const C=window.CORE;
+function daysAgo(n){ return new Date(Date.now()-n*864e5).toISOString().slice(0,10); }
+function fakeExtract(app,docType,file){
+  // Deterministic "OCR": fields derived from what the customer entered; the file name "mismatch" produces conflicts.
+  const mis=/mismatch/i.test(file.name); const k=app.kyc||{}; const f={}; const cf=v=>({value:v,confidence:mis?0.62:0.9+Math.random()*0.08});
+  if(docType==="SUPPLY"){ f.issuer=cf(mis?"Άλλος προμηθευτής":"Supplier S.A."); f.customer_name=cf(mis?"Μ. Ιωάννου":k.name); f.supply_point=cf(mis?String(app.supply_point).replace(/\d$/,d=>9-+d):app.supply_point); f.address=cf(app.address||"Οδός Παραδείγματος 12, 11524"); f.issue_date=cf(daysAgo(mis?140:20)); f.period_end={value:null,confidence:0}; }
+  else if(docType==="OWNERSHIP"){ f.doc_kind=cf("lease"); f.lessee_name=cf(mis?"Μ. Ιωάννου":k.name); f.owner_name=cf("Ε. Δημητρίου"); f.address=cf(app.address||"Οδός Παραδείγματος 12, 11524"); f.start_date=cf(daysAgo(60)); f.end_date={value:null,confidence:0}; f.aade_number=cf("1234567"); }
+  else { f.doc_kind=cf("id_card"); f.full_name=cf(mis?"Μ. Ιωάννου":k.name); f.id_number=cf(k.id_no||"AK 654321"); f.issue_date=cf(daysAgo(1500)); f.expiry_date={value:null,confidence:0}; }
+  const checks=C.runChecks(docType,f,{kyc_name:k.name,kyc_id_no:k.id_no,supply_point:app.supply_point,address:app.address});
+  const {recommendation,confidence}=C.recommend(docType,f,checks);
+  return { model:"demo-ocr", fields:f, checks, confidence, recommendation, latency_ms:420+Math.floor(Math.random()*300) };
+}
+function thumb(file){ return new Promise(res=>{ if(!file.type.startsWith("image/")) return res(null); const r=new FileReader(); r.onload=()=>{ const img=new Image(); img.onload=()=>{ const c=document.createElement("canvas"); const s=Math.min(1,640/Math.max(img.width,img.height)); c.width=img.width*s; c.height=img.height*s; c.getContext("2d").drawImage(img,0,0,c.width,c.height); res(c.toDataURL("image/jpeg",.7)); }; img.onerror=()=>res(null); img.src=r.result; }; r.onerror=()=>res(null); r.readAsDataURL(file); }); }
+function synthScan(docType,mis){ const c=document.createElement("canvas"); c.width=480; c.height=640; const x=c.getContext("2d"); x.fillStyle="#f6f4ee"; x.fillRect(0,0,480,640); x.fillStyle="#d9d5cb"; for(let i=0;i<14;i++) x.fillRect(48,120+i*32,Math.random()*250+120,8); x.fillStyle="#0B3D91"; x.fillRect(48,48,140,28); x.fillStyle="#b8b3a6"; x.font="bold 20px sans-serif"; x.fillText(docType,48,110); if(mis){ x.save(); x.translate(240,400); x.rotate(-.6); x.fillStyle="rgba(180,38,30,.25)"; x.font="bold 54px sans-serif"; x.fillText("SAMPLE",-120,0); x.restore(); } return c.toDataURL("image/jpeg",.6); }
+const ev=(a,actor,system,event,detail)=>a.events.unshift({at:new Date().toISOString(),actor,system,event,detail:detail||null});
+const fail=(error,status=400,field=null)=>{ throw new ApiError(error,status,field); };
+async function demoApi(path,{method="GET",body,form,token}={}){
+  await new Promise(r=>setTimeout(r,180+Math.random()*220)); // network feel
+  const p=path.split("?")[0].split("/").filter(Boolean); const agent=role==="agent";
+  const get=id=>{ const a=DB.apps[id]; if(!a||(!agent&&a.token!==token)) fail("not found",404); return a; };
+  if(p[0]==="applications"){
+    if(method==="POST"&&!p[1]){ const a={id:C.randomId("MYD-"),token:C.randomToken(),created_at:new Date().toISOString(),journey:body.journey,state:"DRAFT",kyc:null,products:[],supply_point:null,address:null,fiber_serviceable:null,email:null,phone:null,payment:null,signed_at:null,activated_at:null,offers:[],parent_id:null,docs:[],events:[],evidence:[],otp:null}; DB.apps[a.id]=a; ev(a,"customer","orchestration","application_created",{journey:a.journey}); dbSave(); return {id:a.id,token:a.token,journey:a.journey}; }
+    if(method==="GET"&&!p[1]){ if(!agent) fail("agent token required",401); return { applications:Object.values(DB.apps).filter(a=>a.kyc).sort((x,y)=>y.created_at.localeCompare(x.created_at)).map(a=>({id:a.id,created_at:a.created_at,journey:a.journey,state:a.state,kyc:{name:a.kyc.name,afm:a.kyc.afm,method:a.kyc.method},products:a.products,signed_at:a.signed_at,activated_at:a.activated_at,parent_id:a.parent_id,docs:a.docs.map(d=>({doc_type:d.doc_type,status:d.status}))})) }; }
+    const a=get(p[1]);
+    if(method==="GET"){ const offers={}; for(const [b,s] of Object.entries(C.SLOT_OF_BLOCK)) offers[b]=a.kyc?C.offersFor(a,s):[]; const {token:_t,docs,events,otp,evidence,...safe}=a; return {application:safe,blocks:C.activeBlocks(a),offers,required_docs:C.requiredDocs(a.products,a.kyc),documents:docs.map(d=>({...d,preview:agent?d.thumb:null})),evidence:agent?evidence:[],events,catalogue:{version:C.CATALOGUE_VERSION,products:C.PRODUCTS,bundles:C.BUNDLES}}; }
+    if(p[2]==="blocks"){ const b=C.blockById(p[3]); if(!b||!b.submit) fail("no handler",404); if(!C.activeBlocks(a).includes(b.id)) fail("block not active",409); if(a.signed_at&&b.id!=="offers_3") fail("application already signed",409);
+      const r=await b.submit({app:a,body:body||{},insertChild:async row=>{ DB.apps[row.id]={...row,created_at:new Date().toISOString(),docs:[],events:[],evidence:[],otp:null}; ev(DB.apps[row.id],"system","offers","child_application_created",{parent:a.id}); }});
+      if(r.error) fail(r.error.message,r.error.status||400,r.error.field||null); Object.assign(a,r.patch||{}); for(const e of r.events||[]) ev(a,e.actor,e.system,e.event,e.detail); dbSave(); return {ok:true,...(r.response||{})}; }
+  }
+  if(p[0]==="otp"){ const a=get(body.application_id); const purpose=body.purpose==="identity"?"identity":"signature";
+    if(p[1]==="send"){ if(purpose==="signature"&&["precontract_info","terms","withdrawal","privacy"].some(c=>!(body.consents||[]).includes(c))) fail("required_consents_missing"); const code=String(Math.floor(100000+Math.random()*900000)); a.otp={purpose,code,tries:0,exp:Date.now()+3e5}; ev(a,"system","otp","code_sent",{purpose,channel:"demo"}); dbSave(); window.__demoOtp=code; console.info("[demo OTP]",code); return {ok:true,delivered_via:"demo",code}; }
+    if(p[1]==="verify"){ if(!a.otp||a.otp.purpose!==purpose) fail("no active code",409); if(Date.now()>a.otp.exp) fail("code expired",410); if(a.otp.tries>=3) fail("too many attempts",429); if(String(body.code)!==a.otp.code){ a.otp.tries++; ev(a,"customer","otp","code_rejected",{attempt:a.otp.tries}); dbSave(); fail("wrong code",a.otp.tries>=3?429:401); }
+      if(purpose==="identity"){ a.kyc={...a.kyc,phone_verified:true}; a.state="IDENTIFIED"; a.otp=null; ev(a,"system","identity","manual_identity_phone_verified"); dbSave(); return {ok:true}; }
+      const now=new Date().toISOString(); let prev=null; for(const sku of a.products){ const canonical=`CONTRACT ${sku}\nAPPLICATION ${a.id}\nSIGNATORY ${a.kyc.name} AFM ${a.kyc.afm}`; const h=await sha(canonical); const rec={id:C.randomId("EVD-",8),contract_id:sku,canonical_hash:h,prev_hash:prev,row_hash:await sha((prev||"")+h+now),signatory:{name:a.kyc.name,afm:a.kyc.afm,identity_method:a.kyc.method,assurance:a.kyc.assurance},otp:{channel:"demo",attempts:a.otp.tries+1,verified_at:now},consents:body.consents||[],created_at:now}; prev=rec.row_hash; a.evidence.push(rec); }
+      a.signed_at=now; a.state="SIGNED"; a.otp=null; ev(a,"system","signature","sealed",{records:a.evidence.length}); dbSave(); return {ok:true,signed_at:now}; } }
+  if(p[0]==="extract"){ const a=get(String(form.get("application_id"))); const file=form.get("file"); const dt=String(form.get("doc_type")); const t0=Date.now();
+    a.docs=a.docs.filter(d=>d.doc_type!==dt||d.status==="approved"); const th=file.__synth||await thumb(file); const x=fakeExtract(a,dt,file);
+    a.docs.push({id:crypto.randomUUID(),doc_type:dt,file_name:file.name,mime:file.type,bytes:file.size,sha256:await sha(file.name+file.size+t0),status:"pending",uploaded_at:new Date().toISOString(),thumb:th,extraction:x});
+    ev(a,"customer","ocr","document_uploaded",{doc_type:dt}); ev(a,"system","ocr","extraction_completed",{doc_type:dt,model:x.model,confidence:x.confidence,recommendation:x.recommendation});
+    if(x.recommendation==="auto_approve"&&!(dt==="ID"&&a.kyc.method==="manual")){ a.docs[a.docs.length-1].status="approved"; a.docs[a.docs.length-1].reviewed_by="system:rules"; ev(a,"system","review","auto_approved",{doc_type:dt}); }
+    dbSave(); return {ok:true,...x}; }
+  if(p[0]==="review"){ if(!agent) fail("agent token required",401); const a=DB.apps[body.application_id]; if(!a) fail("not found",404);
+    if(body.action==="approve"||body.action==="reject"){ const d=a.docs.find(x=>x.id===body.document_id); if(!d) fail("not found",404); Object.assign(d,body.action==="approve"?{status:"approved",reject_reason:null,reject_note:null}:{status:"rejected",reject_reason:body.reason,reject_note:body.note||null},{reviewed_at:new Date().toISOString(),reviewed_by:"agent:demo"}); ev(a,"agent:demo","review",body.action==="approve"?"document_approved":"document_rejected",{doc_type:d.doc_type,reason:body.reason});
+      const req=C.requiredDocs(a.products,a.kyc); const allOk=req.every(t=>a.docs.find(x=>x.doc_type===t&&x.status==="approved")); if(a.docs.some(x=>x.status==="rejected")) a.state="RETURNED"; else if(allOk&&a.signed_at) a.state="SUBMITTED"; else if(allOk) a.state="DOCS_VERIFIED"; dbSave(); return {ok:true}; }
+    if(body.action==="activate"){ const req=C.requiredDocs(a.products,a.kyc); const ok=req.every(t=>a.docs.find(x=>x.doc_type===t&&x.status==="approved")); if(!ok||!a.signed_at) fail("all documents must be approved and the contract signed",409); if(a.kyc.method==="manual"){ const idd=a.docs.find(x=>x.doc_type==="ID"&&x.status==="approved"); if(!idd||!String(idd.reviewed_by).startsWith("agent:")) fail("manual identity: ID document must be approved by an agent",409); } a.state="ACTIVATED"; a.activated_at=new Date().toISOString(); ev(a,"agent:demo","orchestration","activated"); dbSave(); return {ok:true}; }
+  }
+  fail("not found",404);
+}
+async function sha(s){ const h=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(s)); return [...new Uint8Array(h)].map(b=>b.toString(16).padStart(2,"0")).join(""); }
+api=demoApi; agentToken="demo";
+/* demo helpers: show OTP code in the UI, one-click sample scans */
+const _toast=toast; toast=(m,k)=>_toast(m,k);
+document.addEventListener("click",e=>{ const b=e.target.closest('[data-act="sendotp"],[data-act="mansend"]'); if(b) setTimeout(()=>{ if(window.__demoOtp) _toast("Demo OTP: "+window.__demoOtp); },900); });
+window.demoUpload=async function(mismatch){ const a=DB.apps[S.id]; if(!a) return; for(const d of C.requiredDocs(a.products,a.kyc)){ if(a.docs.find(x=>x.doc_type===d&&x.status!=="rejected")) continue; const f=new File(["x"],(mismatch?"mismatch_":"")+d.toLowerCase()+"_scan.jpg",{type:"image/jpeg"}); Object.defineProperty(f,"size",{value:420000}); f.__synth=synthScan(d,mismatch&&d==="SUPPLY"); const fm=new FormData(); fm.append("application_id",S.id); fm.append("doc_type",d); fm.append("file",f); await demoApi("/extract",{method:"POST",form:fm,token:S.token}); mismatch=false; } await refresh(); await render(); };

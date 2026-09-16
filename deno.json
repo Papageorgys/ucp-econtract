@@ -1,0 +1,8 @@
+{
+  "tasks": {
+    "embed": "deno run --allow-read --allow-write scripts/embed.ts",
+    "check": "deno task embed && deno check supabase/functions/*/index.ts",
+    "test":  "deno run -A supabase/functions/_shared/rules_test.ts && deno run -A supabase/functions/_shared/offers_test.ts",
+    "deploy": "deno task check && supabase functions deploy applications extract otp review app --no-verify-jwt"
+  }
+}
