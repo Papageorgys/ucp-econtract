@@ -23,10 +23,17 @@ Two reasons, both load-bearing:
 
 Scope is explicit in the URL, never inferred from the request:
 
-| Path | Auth carried by the browser | Header added server-side |
+| Path | Auth carried by the browser | Header sent upstream |
 |---|---|---|
-| `/api/proxy/<fn>/…` | `Authorization: Bearer <application token>` | none |
+| `/api/proxy/<fn>/…` | `x-econtract-token: <application token>` | `Authorization: Bearer …` |
 | `/api/proxy/agent/<fn>/…` | httpOnly `econtract_agent` cookie | `x-agent-token` |
+
+The customer token deliberately does **not** ride in `Authorization` on the browser→Vercel hop.
+Vercel's Deployment Protection validates that header itself and returns its own HTML 403 for a
+value it does not recognise, ignoring the SSO cookie — so on a protected deployment an
+authenticated user got Vercel's error page instead of their application. The proxy re-attaches
+the token as a Bearer header upstream, so the Edge Functions' contract is unchanged. Direct
+callers that bypass the protection layer (curl, tests) may still send `Authorization`.
 
 `<fn>` is allowlisted to `applications`, `extract`, `otp`, `review`. Without that allowlist the
 route would relay to anything else hosted under the Supabase functions origin.

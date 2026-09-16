@@ -15,10 +15,19 @@ export class ApiError extends Error {
 
 type Opts = { method?: "GET" | "POST"; body?: unknown; token?: string | null; form?: FormData };
 
-/** All calls go to this origin. The proxy route reaches Supabase; the browser never does. */
+/**
+ * All calls go to this origin. The proxy route reaches Supabase; the browser never does.
+ *
+ * The application token rides in x-econtract-token, NOT Authorization. Vercel's Deployment
+ * Protection inspects Authorization on every request and 403s a value it cannot validate as
+ * its own credential, ignoring the SSO cookie — so an authenticated user got Vercel's HTML
+ * error page instead of their application. Any edge that treats Authorization as reserved
+ * would do the same. The proxy re-attaches it as a Bearer header on the upstream hop, so the
+ * Edge Functions' contract is unchanged.
+ */
 async function call<T>(path: string, opts: Opts = {}): Promise<T> {
   const headers: Record<string, string> = {};
-  if (opts.token) headers.authorization = `Bearer ${opts.token}`;
+  if (opts.token) headers["x-econtract-token"] = opts.token;
   if (opts.body !== undefined) headers["content-type"] = "application/json";
 
   const res = await fetch(`/api/proxy/${path.replace(/^\/+/, "")}`, {

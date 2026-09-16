@@ -60,8 +60,15 @@ async function forward(req: NextRequest, segments: string[]): Promise<NextRespon
   } else {
     // Customer scope: the per-application bearer is the caller's to present. Any client-supplied
     // x-agent-token is dropped by construction — we only ever set headers we chose above.
+    //
+    // The token arrives as x-econtract-token rather than Authorization. Vercel's Deployment
+    // Protection validates Authorization itself and 403s anything it does not recognise, so a
+    // Bearer header from the browser never reaches this handler on a protected deployment.
+    // Authorization is still accepted for direct callers (curl, tests) that bypass that layer.
+    const token = req.headers.get("x-econtract-token");
     const auth = req.headers.get("authorization");
-    if (auth) headers.set("authorization", auth);
+    if (token) headers.set("authorization", `Bearer ${token}`);
+    else if (auth) headers.set("authorization", auth);
   }
 
   const url = new URL(`${base}/${path.join("/")}`);
