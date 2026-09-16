@@ -67,6 +67,21 @@ async function forward(req: NextRequest, segments: string[]): Promise<NextRespon
     // Authorization is still accepted for direct callers (curl, tests) that bypass that layer.
     const token = req.headers.get("x-econtract-token");
     const auth = req.headers.get("authorization");
+
+    // Creating an application needs no token; everything scoped to an existing one does.
+    const needsToken = fn === "extract" || fn === "otp" || (fn === "applications" && path.length > 1);
+
+    if (!token && !auth && needsToken) {
+      // Forwarding an unauthenticated request made upstream answer "not found", which is the
+      // same 404 a wrong id produces — so a header lost in transit was indistinguishable from
+      // a bad token. Fail here instead, and say which it was.
+      console.log(`[proxy] ${fn}: no application token on request`);
+      return NextResponse.json(
+        { error: "no application token on the request (x-econtract-token missing)" },
+        { status: 401 },
+      );
+    }
+
     if (token) headers.set("authorization", `Bearer ${token}`);
     else if (auth) headers.set("authorization", auth);
   }
