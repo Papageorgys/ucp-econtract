@@ -35,12 +35,19 @@ route would relay to anything else hosted under the Supabase functions origin.
 
 See `.env.example`. Nothing is `NEXT_PUBLIC_*`; no secret reaches the client bundle.
 
-| Variable | Purpose |
-|---|---|
-| `SUPABASE_FUNCTIONS_URL` | Edge Functions base URL, no trailing slash |
-| `PROTO_AGENT_TOKEN` | Same value as the Supabase secret; attached to agent-scoped calls |
-| `AGENT_CONSOLE_PASSWORD` | Gate for `/agent` |
-| `AGENT_SESSION_SECRET` | HMAC key for the session cookie — must be independent of the token above |
+| Variable | Needed for | Where it goes |
+|---|---|---|
+| `SUPABASE_FUNCTIONS_URL` | everything | `.env.production` (not a secret), or a Vercel env var to override |
+| `PROTO_AGENT_TOKEN` | agent console | Vercel env var only |
+| `AGENT_CONSOLE_PASSWORD` | agent console | Vercel env var only |
+| `AGENT_SESSION_SECRET` | agent console | Vercel env var only |
+
+The split matters: the customer journey needs only the first. The other three gate `/agent`,
+and their absence degrades that page alone — `/api/health` reports which are set (booleans
+only, never values) and the banner says which half is affected.
+
+`PROTO_AGENT_TOKEN` must be byte-identical to the Supabase function secret of the same name.
+Setting it here alone changes nothing: the proxy will attach a token the upstream rejects.
 
 ## Local development
 
