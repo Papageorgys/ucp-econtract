@@ -12,7 +12,10 @@ const ALLOWED = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
 Deno.serve(async (req) => {
   const pf = preflight(req); if (pf) return pf;
   if (req.method !== "POST") return err("POST only", 405);
-  const form = await req.formData();
+  // A request with no body or a non-multipart content-type makes formData() throw. Unhandled,
+  // that escapes Deno.serve as a plain-text 500; every other bad input here answers with JSON.
+  let form: FormData;
+  try { form = await req.formData(); } catch { return err("multipart/form-data body required"); }
   const appId = String(form.get("application_id") ?? ""), docType = String(form.get("doc_type") ?? "") as DocType;
   const file = form.get("file");
   if (!(file instanceof File)) return err("file required");
